@@ -3,6 +3,8 @@
 
 import image_processing as ip
 import cv2
+import numpy as np
+from matplotlib import pyplot as plt
 
 # Specify the path to the image
 image_path = 'Images/Image1.jpg'
@@ -18,7 +20,8 @@ def main_Imageimport():
         print("[INFO] Image loaded from {}".format(image_path))
 
         # Display the image in a window
-        cv2.imshow('Press ESC to close the Window', image)
+        #cv2.imshow('Image: Press ESC to close the Window', image)
+        ip.processImage(image)
 
         # Wait for a key event
         key = cv2.waitKey(0)
@@ -41,14 +44,14 @@ def main_Webcam():
     while True:
         # Capture a frame from the webcam
         ret, frame = cap.read()
-
+        ip.processImage(frame)
         # Check if the frame is successfully captured
         if not ret:
             print("[ERROR] Could not read frame.")
             break
 
         # Display the frame in a window
-        cv2.imshow('Webcam, press ESC to close', frame)
+        # cv2.imshow('Webcam, press ESC to close', frame)
 
         # Break the loop if 'ESC' is pressed (27: ASCII for ESC)
         if cv2.waitKey(1) == 27:
