@@ -1,7 +1,7 @@
 # This is part of the lecture roboter vision
 # Date 10.11.2023
 
-import image_processing as ip
+from src import image_processing as ip
 import cv2
 
 # Specify the path to the image
