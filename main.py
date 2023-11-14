@@ -3,11 +3,9 @@
 
 import image_processing as ip
 import cv2
-import numpy as np
-from matplotlib import pyplot as plt
 
 # Specify the path to the image
-image_path = 'Images/Image1.jpg'
+image_path = 'Images/Image2.jpg'
 
 def main_Imageimport():
     # Read the image using OpenCV
@@ -21,6 +19,10 @@ def main_Imageimport():
 
         # Display the image in a window
         #cv2.imshow('Image: Press ESC to close the Window', image)
+        cv2.namedWindow('Image and Edges: Press ESC to close the Window', cv2.WINDOW_NORMAL)
+        cv2.namedWindow('inverted_image: Press ESC to close the Window', cv2.WINDOW_NORMAL)
+        cv2.resizeWindow('Image and Edges: Press ESC to close the Window', 1080, 360)
+        cv2.resizeWindow('inverted_image: Press ESC to close the Window', 1080, 720)
         ip.processImage(image)
 
         # Wait for a key event
@@ -44,6 +46,10 @@ def main_Webcam():
     while True:
         # Capture a frame from the webcam
         ret, frame = cap.read()
+        cv2.namedWindow('Image and Edges: Press ESC to close the Window', cv2.WINDOW_NORMAL)
+        cv2.namedWindow('inverted_image: Press ESC to close the Window', cv2.WINDOW_NORMAL)
+        cv2.resizeWindow('Image and Edges: Press ESC to close the Window', 1080, 360)
+        cv2.resizeWindow('inverted_image: Press ESC to close the Window', 1080, 720)
         ip.processImage(frame)
         # Check if the frame is successfully captured
         if not ret:

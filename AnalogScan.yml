@@ -1,4 +1,4 @@
-name: AnalogScan
+name: analogScan
 channels:
   - defaults
 dependencies:
@@ -21,4 +21,4 @@ dependencies:
   - pip:
     - numpy==1.26.2
     - opencv-python==4.8.1.78
-prefix: C:\Users\Tim\anaconda3\envs\AnalogScan
+prefix: C:\Users\Tim\anaconda3\envs\analogScan
