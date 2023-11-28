@@ -3,69 +3,72 @@
 
 from src import image_processing as ip
 import cv2
+global mode
+imageMode = "image"
+cameraMode = "camera"
 
 # Specify the path to the image
-image_path = 'Images/Image2.jpg'
+image_path = 'Images/35mmSW.jpg'
+imageP = ip.ImageProcessing()
 
-def main_Imageimport():
-    # Read the image using OpenCV
-    image = cv2.imread(image_path)
+scale_percent = 20
 
-    # Check if the image loaded successfully
-    if image is None:
-        print("[ERROR] Unable to load the image from {image_path}".format(image_path))
+def main():
+    cap = None
+
+    if mode is cameraMode:
+        cap = cv2.VideoCapture(0)
+        if not cap.isOpened():
+            print("[ERROR] Could not open the camera.")
+            # Close if there is no Webcam available
+            exit()
+    elif mode is imageMode:
+        image = cv2.imread(image_path)
+        if image is None:
+            print("[ERROR] Unable to load the image from {}".format(image_path))
+            exit()
+        # Ursprüngliche Abmessungen des Bildes erhalten
+        width = int(image.shape[1] * scale_percent / 100)
+        height = int(image.shape[0] * scale_percent / 100)
+        dim = (width, height)
+
+        image = cv2.resize(image, dim, interpolation=cv2.INTER_AREA)
+        imageP.setImage(image)
+
     else:
-        print("[INFO] Image loaded from {}".format(image_path))
-
-        # Display the image in a window
-        #cv2.imshow('Image: Press ESC to close the Window', image)
-        cv2.namedWindow('Image and Edges: Press ESC to close the Window', cv2.WINDOW_NORMAL)
-        cv2.namedWindow('inverted_image: Press ESC to close the Window', cv2.WINDOW_NORMAL)
-        cv2.resizeWindow('Image and Edges: Press ESC to close the Window', 1080, 360)
-        cv2.resizeWindow('inverted_image: Press ESC to close the Window', 1080, 720)
-        ip.processImage(image)
-
-        # Wait for a key event
-        key = cv2.waitKey(0)
-
-        # Check if the pressed key is ESC (27: ASCII for ESC)
-        if key == 27:
-            # Close the window if ESC is pressed
-            cv2.destroyAllWindows()
-
-def main_Webcam():
-    # Create a VideoCapture object to capture video from the default camera (usually 0)
-    cap = cv2.VideoCapture(0)
-
-    # Check if the camera is opened successfully
-    if not cap.isOpened():
-        print("[ERROR] Could not open the camera.")
-        # Close if there is no Webcam available
+        print("[ERROR] Mode {} unknown".format(mode))
         exit()
 
+    # Generate and resize windows
+    cv2.namedWindow('Image and Edges: Press ESC to close the Window', cv2.WINDOW_NORMAL)
+    cv2.resizeWindow('Image and Edges: Press ESC to close the Window', 1080, 360)
+    # cv2.namedWindow('inverted_image: Press ESC to close the Window', cv2.WINDOW_NORMAL)
+    # cv2.resizeWindow('inverted_image: Press ESC to close the Window', 1080, 720)
+
+    cv2.namedWindow('Trackbar', cv2.WINDOW_NORMAL)
+    cv2.createTrackbar('Threshold Low', 'Trackbar', imageP.threshold_value_low, 255, imageP.on_trackbar_low)
+    cv2.createTrackbar('Threshold High', 'Trackbar', imageP.threshold_value_high , 255, imageP.on_trackbar_high)
+
+    ### Mainloop
     while True:
-        # Capture a frame from the webcam
-        ret, frame = cap.read()
-        cv2.namedWindow('Image and Edges: Press ESC to close the Window', cv2.WINDOW_NORMAL)
-        cv2.namedWindow('inverted_image: Press ESC to close the Window', cv2.WINDOW_NORMAL)
-        cv2.resizeWindow('Image and Edges: Press ESC to close the Window', 1080, 360)
-        cv2.resizeWindow('inverted_image: Press ESC to close the Window', 1080, 720)
-        ip.processImage(frame)
-        # Check if the frame is successfully captured
-        if not ret:
-            print("[ERROR] Could not read frame.")
-            break
+        if mode is cameraMode:
+            ret, image = cap.read()
+            if not ret:
+                print("[ERROR] Could not read frame.")
+                break
+        else:
+            image = imageP.getImage()
 
-        # Display the frame in a window
-        # cv2.imshow('Webcam, press ESC to close', frame)
+        imageP.processImage(image)
 
-        # Break the loop if 'ESC' is pressed (27: ASCII for ESC)
         if cv2.waitKey(1) == 27:
+            if mode is cameraMode:
+                # Release the VideoCapture object and close the window
+                cap.release()
             break
 
-    # Release the VideoCapture object and close the window
-    cap.release()
     cv2.destroyAllWindows()
+
 
 if __name__ == '__main__':
     print("What Kind of Image do you want to load?")
@@ -73,19 +76,19 @@ if __name__ == '__main__':
     print("[2] Image of (connected) camera")
     print("[9] Exit")
 
-    while True:
-        # Check the choosen mode
-        answer = input("Insert number:")
-
-        if answer == "1":
-            main_Imageimport()
-            exit()
-        elif answer == "2":
-            main_Webcam()
-            exit()
-        elif answer == "9":
-            exit()
-        else:
-            print("Your choosen mode is not available, choose another one")
+    # Check the choosen mode
+    answer = input("Insert number:")
+    if answer == "1":
+        mode = imageMode
+        main()
+        exit()
+    elif answer == "2":
+        mode = cameraMode
+        main()
+        exit()
+    elif answer == "9":
+        exit()
+    else:
+        print("Your chosen mode is not available, choose another one")
 
 

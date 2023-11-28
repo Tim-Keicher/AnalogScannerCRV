@@ -35,3 +35,5 @@ Die Arbeitspakete bestehen aus:
 
 16.02:
 - Dokumentation
+
+Validate with scanned image (original)
