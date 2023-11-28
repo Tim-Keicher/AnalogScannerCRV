@@ -45,9 +45,11 @@ def main():
     # cv2.namedWindow('inverted_image: Press ESC to close the Window', cv2.WINDOW_NORMAL)
     # cv2.resizeWindow('inverted_image: Press ESC to close the Window', 1080, 720)
 
+    '''
     cv2.namedWindow('Trackbar', cv2.WINDOW_NORMAL)
     cv2.createTrackbar('Threshold Low', 'Trackbar', imageP.threshold_value_low, 255, imageP.on_trackbar_low)
     cv2.createTrackbar('Threshold High', 'Trackbar', imageP.threshold_value_high , 255, imageP.on_trackbar_high)
+    '''
 
     ### Mainloop
     while True:
