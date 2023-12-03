@@ -40,16 +40,16 @@ def main():
         exit()
 
     # Generate and resize windows
-    cv2.namedWindow('Image and Edges: Press ESC to close the Window', cv2.WINDOW_NORMAL)
-    cv2.resizeWindow('Image and Edges: Press ESC to close the Window', 1080, 360)
+#    cv2.namedWindow('Image and Edges: Press ESC to close the Window', cv2.WINDOW_NORMAL)
+#    cv2.resizeWindow('Image and Edges: Press ESC to close the Window', 1080, 360)
     # cv2.namedWindow('inverted_image: Press ESC to close the Window', cv2.WINDOW_NORMAL)
     # cv2.resizeWindow('inverted_image: Press ESC to close the Window', 1080, 720)
 
-    '''
+    
     cv2.namedWindow('Trackbar', cv2.WINDOW_NORMAL)
     cv2.createTrackbar('Threshold Low', 'Trackbar', imageP.threshold_value_low, 255, imageP.on_trackbar_low)
     cv2.createTrackbar('Threshold High', 'Trackbar', imageP.threshold_value_high , 255, imageP.on_trackbar_high)
-    '''
+    
 
     ### Mainloop
     while True:
@@ -79,7 +79,8 @@ if __name__ == '__main__':
     print("[9] Exit")
 
     # Check the choosen mode
-    answer = input("Insert number:")
+    #answer = input("Insert number:")
+    answer = "1"
     if answer == "1":
         mode = imageMode
         main()
