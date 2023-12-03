@@ -3,7 +3,9 @@ import numpy as np
 
 # Bild laden (schwarz-weißes Negativ)
 image_path = 'ProcessedImages/35mmSW_cropped.jpg'
-negativ = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+original_image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+
+negativ = original_image
 
 # Überprüfen, ob das Bild erfolgreich geladen wurde
 if negativ is None:
@@ -33,16 +35,16 @@ split_points = np.where(column_sums < Threshold)[0]
 for split_point in split_points:
     cv2.line(negativ, (split_point, 0), (split_point, negativ.shape[0]), 255, 2)  # Trennlinien zeichnen (Farbe: 255)
 
-'''# Bilder zwischen den Trennlinien ausschneiden und speichern
+# Bilder zwischen den Trennlinien ausschneiden und speichern
 for i in range(len(split_points) - 1):
     start_row = split_points[i]
     end_row = split_points[i + 1]
 
     # Bild zwischen den Trennlinien ausschneiden
-    cropped_image = negativ[start_row:end_row, :]
+    cropped_image = original_image[:, start_row:end_row]
 
     # Bild speichern (hier als PNG, aber du kannst das Format anpassen)
-    cv2.imwrite(f'ProcessedImages/Bild_{i + 1}.png', cropped_image)'''
+    cv2.imwrite(f'ProcessedImages/Bild_{i + 1}.png', cropped_image)
 
 # Ergebnis anzeigen
 cv2.imshow('Negatives Bild mit Trennlinien', negativ)
