@@ -5,7 +5,7 @@ import numpy as np
 image_path = 'ProcessedImages/35mmSW_cropped.jpg'
 original_image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 
-negativ = original_image
+negativ = original_image.copy()
 
 # Überprüfen, ob das Bild erfolgreich geladen wurde
 if negativ is None:
@@ -17,13 +17,20 @@ edges = cv2.Canny(negativ, 180, 230, apertureSize=3)
 
 # Hough-Linien-Transformation durchführen
 Threshold = 10
-lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=Threshold, minLineLength=30, maxLineGap=2)
+lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=Threshold, minLineLength=30, maxLineGap=1)
 
 # Überprüfen, ob Linien gefunden wurden
 if lines is not None:
+    prev_line_x = None
+    min_distance = 0
+
     for line in lines:
         x1, _, x2, _ = line[0]
+
+        #if prev_line_x is not None and x1 - prev_line_x >= min_distance:
         cv2.line(negativ, (x1, 0), (x2, negativ.shape[0]), 0, 2)  # Vertikale Linien zeichnen (Farbe: 0)
+
+        prev_line_x = x2
 
 # Spalten-Summen berechnen
 column_sums = np.sum(negativ, axis=0)
