@@ -68,7 +68,9 @@ class ImageProcessing():
 
         out = cv2.warpPerspective(self.Image, M, (maxWidth, maxHeight), flags=cv2.INTER_LINEAR)
 
+        cv2.imwrite(f'ProcessedImages/35mmSW_cropped_unwarped.jpg', out)
         cv2.imshow('unwarped', out)
+
 
 
         for contour in contours_otsu:
