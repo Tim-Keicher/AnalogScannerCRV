@@ -6,7 +6,7 @@ image_path = 'ProcessedImages/35mmSW_cropped.jpg'
 image = cv2.imread(image_path)
 original_image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 
-negativ = original_image.copy()
+negativ = image.copy()
 cv2.imshow('test', negativ)
 # Überprüfen, ob das Bild erfolgreich geladen wurde
 if negativ is None:
@@ -14,7 +14,7 @@ if negativ is None:
     exit()
 
 # Kantenerkennung mit Canny
-edges = cv2.Canny(negativ, 180, 230, apertureSize=3)
+edges = cv2.Canny(original_image, 180, 230, apertureSize=3)
 
 # Hough-Linien-Transformation durchführen
 Threshold = 30
@@ -40,7 +40,7 @@ split_points = np.where(column_sums > 12500)[0]
 
 # Trennlinien in das Originalbild zeichnen
 for split_point in split_points:
-    cv2.line(negativ, (split_point, 0), (split_point, negativ.shape[0]), (255, 0, 0), 3)  # Trennlinien zeichnen (Farbe: 255)
+    cv2.line(negativ, (split_point, 0), (split_point, negativ.shape[0]), (0, 255, 0), 3)  # Trennlinien zeichnen (Farbe: 255)
 #
 # Bilder zwischen den Trennlinien ausschneiden und speichern
 for i in range(len(split_points) - 1):
@@ -55,7 +55,6 @@ for i in range(len(split_points) - 1):
     else:
         # Bild zwischen den Trennlinien ausschneiden
         cropped_image = image[:, start_row:end_row]
-
 
         # Bild speichern (hier als PNG, aber du kannst das Format anpassen)
         cv2.imwrite(f'ProcessedImages/Bild_{i + 1}.png', cropped_image)
