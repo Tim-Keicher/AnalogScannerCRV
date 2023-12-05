@@ -40,6 +40,36 @@ class ImageProcessing():
         closed_image_otsu = cv2.morphologyEx(thresh_otsu, cv2.MORPH_CLOSE, kernel)
         edges_otsu = cv2.Canny(closed_image_otsu, 30, 150)
         contours_otsu, _ = cv2.findContours(edges_otsu, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cv2.imshow("otsu", closed_image_otsu)
+
+        # detect corners with the goodFeaturesToTrack function.
+        corners = cv2.goodFeaturesToTrack(closed_image_otsu, 4, 0.5, 10)
+        corners = np.int0(corners)
+
+        pt_A = corners[0][0]
+        pt_B = corners[1][0]
+        pt_C = corners[2][0]
+        pt_D = corners[3][0]
+
+        width_AD = np.sqrt(((pt_A[0] - pt_D[0]) ** 2) + ((pt_A[1] - pt_D[1]) ** 2))
+        width_BC = np.sqrt(((pt_B[0] - pt_C[0]) ** 2) + ((pt_B[1] - pt_C[1]) ** 2))
+        maxWidth = max(int(width_AD), int(width_BC))
+
+        height_AB = np.sqrt(((pt_A[0] - pt_B[0]) ** 2) + ((pt_A[1] - pt_B[1]) ** 2))
+        height_CD = np.sqrt(((pt_C[0] - pt_D[0]) ** 2) + ((pt_C[1] - pt_D[1]) ** 2))
+        maxHeight = max(int(height_AB), int(height_CD))
+
+        input_pts = np.float32([pt_A, pt_B, pt_C, pt_D])
+        output_pts = np.float32([[0, 0],
+                                 [0, maxHeight - 1],
+                                 [maxWidth - 1, maxHeight - 1],
+                                 [maxWidth - 1, 0]])
+        M = cv2.getPerspectiveTransform(input_pts, output_pts)
+
+        out = cv2.warpPerspective(self.Image, M, (maxWidth, maxHeight), flags=cv2.INTER_LINEAR)
+
+        cv2.imshow('unwarped', out)
+
 
         for contour in contours_otsu:
             x, y, w, h = cv2.boundingRect(contour)
@@ -105,17 +135,9 @@ class ImageProcessing():
         #contours_otsu_cropped, _ = cv2.findContours(croped_edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         cv2.imshow("croped_edges",croped_edges)
-        '''lines = cv2.HoughLinesP(croped_edges, 1, np.pi / 180, threshold=150, minLineLength=50, maxLineGap=10)
-
-        if lines is not None:
-            for line in lines:
-                x1, y1, x2, y2 = line[0]
-                cv2.line(croped, (x1, y1), (x2, y2), (0, 255, 0), 2)'''
 
         # Zeige das Bild mit den erkannten Linien
         cv2.imshow("Vertical Lines", croped)
-
-
 
         # Prepare text and position for display
         font = cv2.FONT_HERSHEY_SIMPLEX
