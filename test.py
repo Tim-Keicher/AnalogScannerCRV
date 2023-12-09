@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 # Bild laden (schwarz-weißes Negativ)
-image_path = 'ProcessedImages/35mmSW_cropped.jpg'
+image_path = 'ProcessedImages/35mmSW_cropped_unwarped.jpg'
 image = cv2.imread(image_path)
 original_image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 
@@ -10,7 +10,7 @@ negativ = image.copy()
 cv2.imshow('test', negativ)
 # Überprüfen, ob das Bild erfolgreich geladen wurde
 if negativ is None:
-    print(f"Fehler beim Laden des Bildes: {image_path}")
+    print("No Negative Image Exits")
     exit()
 
 # Kantenerkennung mit Canny
