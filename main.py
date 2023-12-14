@@ -1,7 +1,7 @@
 # This is part of the lecture roboter vision
 # Date 10.11.2023
 
-from src import img_process as ip
+from src import image_processing as ip
 import cv2
 global mode
 imageMode = "image"
@@ -9,7 +9,7 @@ cameraMode = "camera"
 
 # Specify the path to the image
 image_path = 'Images/35mmSW.jpg'
-imageP = ip.ImgProcess()
+imageP = ip.ImageProcessing()
 
 scale_percent = 20
 
