@@ -1,7 +1,7 @@
 # This is part of the lecture roboter vision
 # Date 10.11.2023
 
-from src import image_processing as ip
+from src import img_process as ip
 import cv2
 global mode
 imageMode = "image"
@@ -9,7 +9,7 @@ cameraMode = "camera"
 
 # Specify the path to the image
 image_path = 'Images/35mmSW.jpg'
-imageP = ip.ImageProcessing()
+imageP = ip.ImgProcess()
 
 scale_percent = 20
 
@@ -33,7 +33,8 @@ def main():
         dim = (width, height)
 
         image = cv2.resize(image, dim, interpolation=cv2.INTER_AREA)
-        imageP.setImage(image)
+        imageP.process(image)
+        #imageP.setImage(image)
 
     else:
         print("[ERROR] Mode {} unknown".format(mode))
@@ -46,9 +47,9 @@ def main():
     # cv2.resizeWindow('inverted_image: Press ESC to close the Window', 1080, 720)
 
     
-    cv2.namedWindow('Trackbar', cv2.WINDOW_NORMAL)
-    cv2.createTrackbar('Threshold Low', 'Trackbar', imageP.threshold_value_low, 255, imageP.on_trackbar_low)
-    cv2.createTrackbar('Threshold High', 'Trackbar', imageP.threshold_value_high , 255, imageP.on_trackbar_high)
+    #cv2.namedWindow('Trackbar', cv2.WINDOW_NORMAL)
+    #cv2.createTrackbar('Threshold Low', 'Trackbar', imageP.threshold_value_low, 255, imageP.on_trackbar_low)
+    #cv2.createTrackbar('Threshold High', 'Trackbar', imageP.threshold_value_high , 255, imageP.on_trackbar_high)
     
 
     ### Mainloop
@@ -59,9 +60,10 @@ def main():
                 print("[ERROR] Could not read frame.")
                 break
         else:
-            image = imageP.getImage()
+            #image = imageP.getImage()
+            pass
 
-        imageP.processImage(image)
+        #imageP.processImage(image)
 
         if cv2.waitKey(1) == 27:
             if mode is cameraMode:
