@@ -150,7 +150,7 @@ class ImageProcessing():
             if end_row - start_row < 10 or end_row is None:
                 snipped = image[:, start_row:end_row]
                 if snipped.size > 0:
-                    cv2.imwrite('ProcessedImages/Snipped.png', snipped)
+                    cv2.imwrite('ProcessedImages/Snipped.jpg', snipped)
                 pass
 
             else:
