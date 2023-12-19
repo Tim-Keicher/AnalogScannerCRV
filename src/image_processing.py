@@ -147,12 +147,16 @@ class ImageProcessing():
         column_sums = np.sum(negative, axis=0)
 
         # Find split points (columns with pixel sum below a threshold)
-        split_points = np.where(column_sums > 12500)[0]
+        split_points = np.where(column_sums > 25000)[0]
 
         # Draw separation lines in the original image
         for split_point in split_points:
             cv2.line(negative, (split_point, 0), (split_point, negative.shape[0]), (0, 255, 0), 3)  # Draw separation lines (Color: 255)
-        
+
+        cv2.imshow('test', negative)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
         # Cut and save images between separation lines
         cropped_imgs = []
         for i in range(len(split_points) - 1):

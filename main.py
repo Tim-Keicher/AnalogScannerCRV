@@ -11,7 +11,7 @@ cameraMode = "camera"
 image_path = 'Images/35mmSW.jpg'
 imageP = ip.ImageProcessing()
 
-scale_percent = 20
+scale_percent = 40
 
 def main():
     cap = None
