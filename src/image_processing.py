@@ -1,5 +1,7 @@
 PATH_PROCESSED_IMG = "ProcessedImages/"
 
+config_cut_img_sep_lines = True
+
 import cv2
 import numpy as np
 import datetime
@@ -153,9 +155,8 @@ class ImageProcessing():
         for split_point in split_points:
             cv2.line(negative, (split_point, 0), (split_point, negative.shape[0]), (0, 255, 0), 3)  # Draw separation lines (Color: 255)
 
-        cv2.imshow('test', negative)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        if config_cut_img_sep_lines is True:
+            self.showImg('cut images: negative with separation lines', negative)
 
         # Cut and save images between separation lines
         cropped_imgs = []
@@ -198,5 +199,7 @@ class ImageProcessing():
             raise IOError(f"Error saving the image to '{filename}': {str(e)}")
 
     #------------------------------------------------------------------------------------------------------
-    def showImg(self, img):
-        pass
+    def showImg(self, window_name, img):
+        cv2.imshow(window_name, img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()

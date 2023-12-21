@@ -1,3 +1,4 @@
 *.pyc
 /ProcessedImages/*.png
+/ProcessedImages/*.jgp
 .idea
