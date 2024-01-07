@@ -45,7 +45,7 @@ class ImageProcessing():
         crp_img = self.cutStrip(img)
 
         # Cut and retrieve individual images separated by vertical lines
-        single_imgs = self.cutSingleImgs(crp_img)
+        single_imgs, strip = self.cutSingleImgs(crp_img)
 
         # Save each individual image with an index as part of the filename
         for i, img in enumerate(single_imgs):
@@ -141,7 +141,9 @@ class ImageProcessing():
         # Check if the image was successfully loaded
         if img is None or not isinstance(img, np.ndarray):
             raise ValueError("Invalid input image. Please provide a valid NumPy array.")
-        
+
+        strip = None
+
         # Create a copy of the input image
         negative = img.copy()
 
@@ -165,12 +167,15 @@ class ImageProcessing():
             end_row = split_points[i + 1]
 
             if end_row - start_row < 10 or end_row is None:
-                pass
+                if strip is None:
+                    strip = img[:, start_row:start_row+9]
+                else:
+                    pass
             else:
                 # Crop the image between separation lines
                 cropped_imgs.append(img[:, start_row:end_row])
 
-        return cropped_imgs
+        return cropped_imgs, strip
 
     #------------------------------------------------------------------------------------------------------
     def invertImg(self, img):

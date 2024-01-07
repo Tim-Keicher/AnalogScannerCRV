@@ -2,8 +2,6 @@ from src import image_processing as ip
 import numpy as np
 import cv2
 global mode
-import matplotlib.pyplot as plt
-from PIL import Image
 
 
 def  calcOffset(snipped):
@@ -42,6 +40,7 @@ def invert_with_offset(img, offset):
 
     return inverted_white_balance_img
 
+
 def inver_with_offset_color(img):
     # Inversion der Farben für jedes Farbkanalbild
     inverted_img = cv2.bitwise_not(img)
@@ -74,6 +73,7 @@ def inver_with_offset_color(img):
     cv2.destroyAllWindows()
 
     return inverted_combined
+
 
 def compare_images(image, original_image):
     # Konvertiere die Bilder in numpy arrays für den Pixelvergleich
