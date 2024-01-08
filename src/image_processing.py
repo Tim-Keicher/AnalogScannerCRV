@@ -1,12 +1,11 @@
-PATH_PROCESSED_IMG = "ProcessedImages/"
-
-config_cut_img_sep_lines = True
-
 import cv2
 import numpy as np
 import datetime
+import src.colorcorectionBW as ccBW
+import src.colorcorrectionCOLOR as ccC
 
-class ImageProcessing():
+
+class ImageProcessing:
     """A class for image processing operations, including strip cutting, individual image extraction, and saving.
 
     Attributes:
@@ -22,9 +21,15 @@ class ImageProcessing():
     """
 
     def __init__(self):
-        pass
+        self.scan_type = None
+        self.type_color = 'color'
+        self.type_bw = 'bw'
 
-    #------------------------------------------------------------------------------------------------------
+        self.showImage = False
+        self.PATH_PROCESSED_IMG = "ProcessedImages/"
+        self.config_cut_img_sep_lines = True
+
+    # ------------------------------------------------------------------------------------------------------
     def process(self, img):
         """Process an input image by cutting strips, extracting individual images, and saving them.
 
@@ -54,7 +59,7 @@ class ImageProcessing():
         # Exit the process after saving images
         exit()
 
-    #------------------------------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------------------------------
     def cutStrip(self, img):
         """Cuts a rectangular strip from the input image based on corner detection.
 
@@ -106,6 +111,7 @@ class ImageProcessing():
         pt_C = corners[2][0]
         pt_D = corners[3][0]
 
+        # Correct the alignment of the whole stripe
         width_AD = np.sqrt(((pt_A[0] - pt_D[0]) ** 2) + ((pt_A[1] - pt_D[1]) ** 2))
         width_BC = np.sqrt(((pt_B[0] - pt_C[0]) ** 2) + ((pt_B[1] - pt_C[1]) ** 2))
         max_width = max(int(width_AD), int(width_BC))
@@ -125,7 +131,7 @@ class ImageProcessing():
 
         return croped_img
 
-    #------------------------------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------------------------------
     def cutSingleImgs(self, img):
         """Cut and save individual images separated by vertical lines.
 
@@ -157,7 +163,7 @@ class ImageProcessing():
         for split_point in split_points:
             cv2.line(negative, (split_point, 0), (split_point, negative.shape[0]), (0, 255, 0), 3)  # Draw separation lines (Color: 255)
 
-        if config_cut_img_sep_lines is True:
+        if self.config_cut_img_sep_lines is True:
             self.showImg('cut images: negative with separation lines', negative)
 
         # Cut and save images between separation lines
@@ -167,6 +173,7 @@ class ImageProcessing():
             end_row = split_points[i + 1]
 
             if end_row - start_row < 10 or end_row is None:
+                # Cut a strip to calculate the white balance value of the individual negative film
                 if strip is None:
                     strip = img[:, start_row:start_row+9]
                 else:
@@ -177,11 +184,38 @@ class ImageProcessing():
 
         return cropped_imgs, strip
 
-    #------------------------------------------------------------------------------------------------------
-    def invertImg(self, img):
-        pass
+    # ------------------------------------------------------------------------------------------------------
+    def invertImg(self, negative_img, offset_img, negative_type):
+        """ Invert the provided image and return it, based on the negative_type.
 
-    #------------------------------------------------------------------------------------------------------
+                Args:
+                    negative_img (numpy.ndarray): The negative input image.
+                    offset_img (numpy.ndarray): Cutout of the negative strip (total white value).
+                    negative_type (string): CHeck for Color or BW color detection.
+
+                Returns:
+                    inverted_image (numpy.ndarray): The inverted image
+
+                Raises:
+                    ReturnError: If the negative_type is not valid type.
+                """
+        # Invert colored image
+        if negative_type is self.type_color:
+            offset = ccC.calcOffset(offset_img)
+            inverted_image = ccC.invert_with_offset(img=negative_img, offset=offset, showImage=self.showImage)
+
+        # Invert black and white image
+        elif negative_type is self.type_bw:
+            offset = ccBW.calcOffset(offset_img)
+            inverted_image = ccBW.invert_with_offset(img=negative_img, offset=offset, showImage=self.showImage)
+
+        else:
+            print(f'[WARNING] Type {negative_type} of inverting unknown ')
+            inverted_image = -1
+
+        return inverted_image
+
+    # ------------------------------------------------------------------------------------------------------
     def saveImg(self, img, filename_tag=""):
         """Save an image with a filename containing the current date and time.
 
@@ -196,7 +230,7 @@ class ImageProcessing():
             IOError: If the image cannot be successfully saved.
         """
         current_date = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        filename = PATH_PROCESSED_IMG + f"{current_date}_IMG" + filename_tag + ".jpg"
+        filename = self.PATH_PROCESSED_IMG + f"{current_date}_IMG" + filename_tag + ".jpg"
 
         try:
             cv2.imwrite(filename, img)
@@ -207,4 +241,4 @@ class ImageProcessing():
     def showImg(self, window_name, img):
         cv2.imshow(window_name, img)
         cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        cv2.destroyWindow(window_name)

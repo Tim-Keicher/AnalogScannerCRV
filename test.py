@@ -1,4 +1,4 @@
-import src.colorcorectionSW as ccSW
+import src.colorcorectionBW as ccSW
 import src.colorcorrectionCOLOR as ccC
 import cv2
 
