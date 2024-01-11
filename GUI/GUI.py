@@ -3,6 +3,7 @@
 import customtkinter as ctk
 import os
 from PIL import Image
+from tkinter import filedialog
 
 ctk.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
 ctk.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
@@ -10,6 +11,10 @@ ctk.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark
 class App(ctk.CTk):
     # __init__ function for class tkinterApp
     def __init__(self, *args, **kwargs):
+        # Set variables
+        self.load_location_path:str = None
+        self.save_location_path:str = None
+
         # __init__ function for class Tk
         ctk.CTk.__init__(self, *args, **kwargs)
         
@@ -96,7 +101,8 @@ class App(ctk.CTk):
             self.sidebar_load.grid(row=2, column=0, padx=20, pady=10)
 
     def sidebar_btn_load_event(self):
-        print("sidebar_btn_load_event click")
+        self.load_location_path = filedialog.askopenfilename(initialdir='Images', title='Select a image!', defaultextension='.png', filetypes=[("JPEG", "*.jpg"), ("PNG", "*.png"), ("GIF", "*.gif"), ("All Files", "*.*")])
+        print(self.load_location_path)
 
     def sidebar_cam_port_event(self, option:str):
         print(option)
@@ -111,7 +117,8 @@ class App(ctk.CTk):
             self.sidebar_save_location.configure(state="disabled")
 
     def sidebar_btn_save_event(self):
-        print("sidebar_btn_save_event click")
+        self.save_location_path = filedialog.asksaveasfilename(initialdir='Images', title='Select save location!', defaultextension='.png', filetypes=[("JPEG", "*.jpg"), ("PNG", "*.png"), ("GIF", "*.gif"), ("All Files", "*.*")])
+        print(self.save_location_path)
 
     def sidebar_btn_process_event(self):
         print("sidebar_btn_process_event click")
