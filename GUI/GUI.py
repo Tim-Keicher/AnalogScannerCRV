@@ -2,7 +2,8 @@
 
 import customtkinter as ctk
 import os
-from PIL import Image
+import cv2
+from PIL import Image, ImageTk
 from tkinter import filedialog
 
 ctk.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
@@ -96,9 +97,11 @@ class App(ctk.CTk):
         if option == "Camera":
             self.sidebar_load.grid_forget()
             self.sidebar_camera_port.grid(row=2, column=0, padx=20, pady=10)
+            self.start_webcam()
         else:
             self.sidebar_camera_port.grid_forget()
             self.sidebar_load.grid(row=2, column=0, padx=20, pady=10)
+            self.stop_webcam()
 
     def sidebar_btn_load_event(self):
         self.load_location_path = filedialog.askopenfilename(initialdir='Images', title='Select a image!', defaultextension='.png', filetypes=[("JPEG", "*.jpg"), ("PNG", "*.png"), ("GIF", "*.gif"), ("All Files", "*.*")])
@@ -130,6 +133,39 @@ class App(ctk.CTk):
         new_scaling_float = int(new_scaling.replace("%", "")) / 100
         ctk.set_widget_scaling(new_scaling_float)
 
+    #----------------------------------------------------------------------------------------------------
+    # Camera functions
+    def start_webcam(self):
+        # Start the webcam
+        self.video_capture = cv2.VideoCapture(0)
+
+        # Create a Tkinter Label to display the camera image
+        self.camera_label = ctk.CTkLabel(self, text="")
+        self.camera_label.grid(row=0, column=1, rowspan=7, padx=20, pady=20)
+
+        # Start the update function
+        self.update_camera()
+
+    # Update the camera image in the Tkinter window
+    def update_camera(self):
+        _, frame = self.video_capture.read()
+        if frame is not None:
+            # OpenCV returns images in BGR format, so we need to convert it to RGB format
+            rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            # Convert the image to a Tkinter PhotoImage
+            tk_image = ImageTk.PhotoImage(Image.fromarray(rgb_image))
+            # Update the image in the Tkinter Label
+            self.camera_label.configure(image=tk_image)
+            self.camera_label.image = tk_image
+        # Update the image again after a certain time (here: 30 milliseconds)
+        self.after(30, self.update_camera)
+
+    def stop_webcam(self):
+        # Stop the update function and turn off the camera
+        self.after_cancel(self.update_camera)
+        self.video_capture.release()
+        self.camera_label.destroy()
+        
 
 if __name__ == '__main__':
     app = App()
