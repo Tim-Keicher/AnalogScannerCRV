@@ -3,7 +3,7 @@
 import customtkinter as ctk
 import os
 import cv2
-from PIL import Image, ImageTk
+from PIL import Image
 from tkinter import filedialog
 
 ctk.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
@@ -153,10 +153,10 @@ class App(ctk.CTk):
             # OpenCV returns images in BGR format, so we need to convert it to RGB format
             rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             # Convert the image to a Tkinter PhotoImage
-            tk_image = ImageTk.PhotoImage(Image.fromarray(rgb_image))
+            ctk_image = ctk.CTkImage(Image.fromarray(rgb_image), size=(850, 500))
             # Update the image in the Tkinter Label
-            self.camera_label.configure(image=tk_image)
-            self.camera_label.image = tk_image
+            self.camera_label.configure(image=ctk_image)
+            self.camera_label.image = ctk_image
         # Update the image again after a certain time (here: 30 milliseconds)
         self.after(30, self.update_camera)
 
