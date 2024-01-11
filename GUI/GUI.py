@@ -56,7 +56,7 @@ class App(ctk.CTk):
 
         self.sidebar_load = ctk.CTkButton(self.sidebar_frame, text="Load Location", image=self.load_icon, anchor='w', command=self.sidebar_btn_load_event)    # need load button as soon as image is selected
         self.sidebar_load.grid(row=2, column=0, padx=20, pady=10)
-        self.sidebar_camera_port = ctk.CTkOptionMenu(self.sidebar_frame, values=["port x", "port ?"], command=self.sidebar_cam_port_event) # need port dropdown as soon as camera is selected
+        self.sidebar_camera_port = ctk.CTkOptionMenu(self.sidebar_frame, values=self.get_connected_camera_ports(), command=self.sidebar_cam_port_event) # need port dropdown as soon as camera is selected
         #self.sidebar_camera_port.grid(row=2, column=0, padx=20, pady=10)   # show sidebar_load button first
 
         self.sidebar_img_format = ctk.CTkOptionMenu(self.sidebar_frame, values=["Small Format", "Middle Format"], command=self.sidebar_format_event)
@@ -165,6 +165,30 @@ class App(ctk.CTk):
         self.after_cancel(self.update_camera)
         self.video_capture.release()
         self.camera_label.destroy()
+
+    def get_connected_camera_ports(self):
+        connected_ports = []
+
+        # Start with index 0 and increment until no camera is found
+        index = 0
+        while True:
+            # Try to open the camera with the current index
+            cap = cv2.VideoCapture(index)
+            
+            # Check if the camera is opened successfully
+            if not cap.isOpened():
+                break
+
+            # Release the camera capture object
+            cap.release()
+
+            # Append the current index to the list of connected ports
+            connected_ports.append("port-" + str(index))
+
+            # Increment the index for the next iteration
+            index += 1
+
+        return connected_ports
         
 
 if __name__ == '__main__':
