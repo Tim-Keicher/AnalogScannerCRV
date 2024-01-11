@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
 import datetime
-import src.colorcorectionBW as ccBW
-import src.colorcorrectionCOLOR as ccC
+import colorcorectionBW as ccBW
+import colorcorrectionCOLOR as ccC
 
 
 class ImageProcessing:

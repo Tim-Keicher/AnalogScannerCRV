@@ -13,13 +13,14 @@ class ImageProcessorApp:
         self.name_colored = "Colored"
         self.name_bw = "Black&White"
         self.name_dia = "Diapositiv"
+        self.dataset = []
 
         # Define root window of GUI
         self.root = root
         self.root.title("Negative Analog Transformer")
         self.frame = tk.Frame(self.root)
         # Own Icon
-        self.root.iconbitmap('../Images/Referenz/HHN.ico')
+        self.root.iconbitmap('Images/Referenz/HHN.ico')
         self.frame.pack(padx=20, pady=20)
 
         # Define dropdown menu
@@ -67,7 +68,6 @@ class ImageProcessorApp:
 
     def load_image_from_path(self):
         self.popup()
-        dataset = []
 
         if self.pathType == "File":
             file_path = filedialog.askopenfilename(title="Chose Image", initialdir="/", filetypes=[("JPEG", "*.jpg"), ("PNG", "*.png"), ("GIF", "*.gif"), ("All Files", "*.*")])
@@ -75,7 +75,7 @@ class ImageProcessorApp:
             if file_path != "":
                 self.Image = cv2.imread(file_path)
                 self.imPro.showImg(window_name='Loaded Image, press any key to close', img=self.Image)
-                dataset.append(self.Image)
+                self.dataset.append(self.Image)
 
         elif self.pathType == "Dir":
             folder_path = filedialog.askdirectory(title="Chose Folder with Images", initialdir="/")
@@ -85,7 +85,7 @@ class ImageProcessorApp:
                 for obj in objects_in_folder:
                     print(obj)
                     # ToDo : check for image file format
-                    dataset.append(cv2.imread(folder_path+obj))
+                    self.dataset.append(cv2.imread(folder_path+obj))
             else:
                 print("[WARNING] Selected object is no folder")
                 pass
@@ -94,7 +94,7 @@ class ImageProcessorApp:
             print(f'[Warning] pathType {self.pathType} unknown')
             pass
 
-        print(f'[INFO] Loaded Images: {len(dataset)}')
+        print(f'[INFO] Loaded Images: {len(self.dataset)}')
 
 
     def detect_images(self):
