@@ -1,6 +1,4 @@
 import customtkinter as ctk
-from PIL import Image, ImageTk
-from tkinter import filedialog
 
 class ImageFrame(ctk.CTkFrame):
     def __init__(self, parent, *args, **kwargs):
@@ -9,13 +7,13 @@ class ImageFrame(ctk.CTkFrame):
         # Create a list to store image labels
         self.image_labels = []
 
-    def update_images(self, image_paths):
+    def update_images(self, images):
         # Clear existing labels
         for label in self.image_labels:
             label.destroy()
 
         # Determine the number of rows and columns based on the image count
-        image_count = len(image_paths)
+        image_count = len(images)
         rows, columns = self.calculate_rows_columns(image_count)
 
         # Get image size corresponds to the number of images to be plotted
@@ -25,8 +23,7 @@ class ImageFrame(ctk.CTkFrame):
             img_size = [840 / 3, 580 / 3]
 
         # Create and add image labels based on the number of images
-        for i, image_path in enumerate(image_paths):
-            image = Image.open(image_path)
+        for i, image in enumerate(images):
             #image.thumbnail((100, 100))  # Resize image to fit in the label
             ctk_image = ctk.CTkImage(image, size=img_size)  # Use ctk.CTkImage for better compatibility
 
@@ -38,7 +35,6 @@ class ImageFrame(ctk.CTkFrame):
             label = ctk.CTkLabel(self, image=ctk_image, text="")
             label.grid(row=row_index, column=column_index, padx=10, pady=(10, 10))
             label.image = ctk_image  # Keep a reference to prevent image from being garbage collected
-            label.bind("<Button-1>", lambda event, path=image_path: self.on_image_click(path))
             
             # Add the label to the list
             self.image_labels.append(label)
@@ -54,7 +50,3 @@ class ImageFrame(ctk.CTkFrame):
         else:
             # Handle additional cases as needed
             return 0, 0
-
-    def on_image_click(self, path):
-        # Handle image click event (you can customize this function)
-        print("Image clicked:", path)

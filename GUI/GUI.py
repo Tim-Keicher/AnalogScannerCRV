@@ -140,8 +140,12 @@ class App(ctk.CTk):
         # test show images
         self.image_frame = ImageFrame(self)
         self.image_frame.grid(row=0, column=1, rowspan=3, columnspan=2, padx=10, pady=10)
-        example_image_paths = ["Images/Analogscan043.jpg"]#, "Images/Analogscan044.jpg", "Images/Analogscan045.jpg", "Images/Analogscan043.jpg", "Images/Analogscan044.jpg", "Images/Analogscan045.jpg"]
-        self.image_frame.update_images(example_image_paths)
+        example_image_paths = ["Images/Analogscan043.jpg", "Images/Analogscan044.jpg", "Images/Analogscan045.jpg", "Images/Analogscan043.jpg", "Images/Analogscan044.jpg", "Images/Analogscan045.jpg"]
+        imgs = []
+        for path in example_image_paths:
+            imgs.append(Image.open(path))
+        
+        self.image_frame.update_images(imgs)
     #----------------------------------------------------------------------------------------------------
     # Sidebar callback functions
     def sidebar_cam_img_event(self, option:str):
