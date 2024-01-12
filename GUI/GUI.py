@@ -11,6 +11,33 @@ ctk.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
 ctk.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
 
 class App(ctk.CTk):
+    """
+    The main application class for the Analog Scanner.
+
+    Attributes:
+        load_location_path (str): Path to the loaded image file.
+        save_location_path (str): Path to save the processed image.
+        current_camera_port (str): Currently selected camera port.
+
+    Methods:
+        __init__(self, *args, **kwargs): Initializes the application window and sets up the GUI elements.
+        sidebar_cam_img_event(self, option: str): Handles events when switching between Image and Camera modes.
+        sidebar_btn_load_event(self): Handles events when the "Load Location" button is clicked.
+        sidebar_cam_port_event(self, option: str): Handles events when selecting a camera port from the dropdown.
+        sidebar_format_event(self, option: str): Handles events when selecting image format from the dropdown.
+        sidebar_cb_save_event(self): Handles events when the "Save Images" checkbox is clicked.
+        sidebar_btn_save_event(self): Handles events when the "Save Location" button is clicked.
+        sidebar_btn_process_event(self): Handles events when the "Process" button is clicked.
+        change_appearance_mode_event(self, new_appearance_mode: str): Handles events when changing appearance mode.
+        change_scaling_event(self, new_scaling: str): Handles events when changing UI scaling.
+        start_webcam(self, port: int = None): Starts the webcam and updates the camera image in the GUI.
+        update_camera(self): Continuously updates the camera image in the GUI.
+        stop_webcam(self): Stops the webcam and clears the camera image from the GUI.
+        get_connected_camera_ports(self): Gets a list of connected camera ports.
+
+    Note:
+        This class inherits from the ctk.CTk class provided by the customtkinter library.
+    """
     # __init__ function for class tkinterApp
     def __init__(self, *args, **kwargs):
         # Set variables
@@ -97,6 +124,12 @@ class App(ctk.CTk):
     #----------------------------------------------------------------------------------------------------
     # Sidebar callback functions
     def sidebar_cam_img_event(self, option:str):
+        """
+        Handles events when switching between Image and Camera modes.
+
+        Parameters:
+            option (str): The selected mode, either "Image" or "Camera".
+        """
         if option == "Camera":
             self.sidebar_load.grid_forget()
             self.sidebar_camera_port.grid(row=2, column=0, padx=20, pady=10)
@@ -120,11 +153,21 @@ class App(ctk.CTk):
             self.stop_webcam()
 
     def sidebar_btn_load_event(self):
+        """
+        Handles events when the "Load Location" button is clicked.
+        Opens a file dialog for selecting image files.
+        """
         self.load_location_path = filedialog.askopenfilename(initialdir='Images', title='Select a image!', multiple=True, defaultextension='.png', filetypes=[("JPEG", "*.jpg"), ("PNG", "*.png"), ("GIF", "*.gif"), ("All Files", "*.*")])
         for img in self.load_location_path:
             print(img)
 
     def sidebar_cam_port_event(self, option:str):
+        """
+        Handles events when selecting a camera port from the dropdown.
+
+        Parameters:
+            option (str): The selected camera port.
+        """
         if self.current_camera_port is not option:
             self.current_camera_port = option
 
@@ -137,31 +180,67 @@ class App(ctk.CTk):
                 self.start_webcam(int(match.group(1)))
         
     def sidebar_format_event(self, option:str):
+        """
+        Handles events when selecting image format from the dropdown.
+
+        Parameters:
+            option (str): The selected image format.
+        """
         print(option)
 
     def sidebar_cb_save_event(self):
+        """
+        Handles events when the "Save Images" checkbox is clicked.
+        Enables or disables the "Save Location" button based on checkbox state.
+        """
         if self.sidebar_save_cb.get():
             self.sidebar_save_location.configure(state="enabled")
         else:
             self.sidebar_save_location.configure(state="disabled")
 
     def sidebar_btn_save_event(self):
+        """
+        Handles events when the "Save Location" button is clicked.
+        Opens a file dialog for selecting the location to save processed images.
+        """
         self.save_location_path = filedialog.asksaveasfilename(initialdir='Images', title='Select save location!', defaultextension='.png', filetypes=[("JPEG", "*.jpg"), ("PNG", "*.png"), ("GIF", "*.gif"), ("All Files", "*.*")])
         print(self.save_location_path)
 
     def sidebar_btn_process_event(self):
+        """
+        Handles events when the "Process" button is clicked.
+        Initiates the image processing or camera capturing based on the selected mode.
+        """
         print("sidebar_btn_process_event click")
 
     def change_appearance_mode_event(self, new_appearance_mode: str):
+        """
+        Handles events when changing appearance mode.
+
+        Parameters:
+            new_appearance_mode (str): The selected appearance mode.
+        """
         ctk.set_appearance_mode(new_appearance_mode)
 
     def change_scaling_event(self, new_scaling: str):
+        """
+        Handles events when changing UI scaling.
+
+        Parameters:
+            new_scaling (str): The selected UI scaling percentage.
+        """
         new_scaling_float = int(new_scaling.replace("%", "")) / 100
         ctk.set_widget_scaling(new_scaling_float)
 
     #----------------------------------------------------------------------------------------------------
     # Camera functions
     def start_webcam(self, port:int=None):
+        """
+        Starts the webcam and updates the camera image in the GUI.
+
+        Parameters:
+            port (int): The camera port to start (default is None).
+        """
         # check for a available camera port
         if port == None:
             print("Warning: No camera detected!")
@@ -177,8 +256,10 @@ class App(ctk.CTk):
         # Start the update function
         self.update_camera()
 
-    # Update the camera image in the Tkinter window
     def update_camera(self):
+        """
+        Continuously updates the camera image in the GUI.
+        """
         _, frame = self.video_capture.read()
         if frame is not None:
             # OpenCV returns images in BGR format, so we need to convert it to RGB format
@@ -192,12 +273,20 @@ class App(ctk.CTk):
         self.after(30, self.update_camera)
 
     def stop_webcam(self):
-        # Stop the update function and turn off the camera
+        """
+        Stops the webcam and clears the camera image from the GUI.
+        """
         self.after_cancel(self.update_camera)
         self.video_capture.release()
         self.camera_label.destroy()
 
     def get_connected_camera_ports(self):
+        """
+        Gets a list of connected camera ports.
+
+        Returns:
+            list: A list of available camera ports.
+        """
         connected_ports = []
 
         # Start with index 0 and increment until no camera is found
