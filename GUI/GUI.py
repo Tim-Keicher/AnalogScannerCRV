@@ -120,8 +120,9 @@ class App(ctk.CTk):
             self.stop_webcam()
 
     def sidebar_btn_load_event(self):
-        self.load_location_path = filedialog.askopenfilename(initialdir='Images', title='Select a image!', defaultextension='.png', filetypes=[("JPEG", "*.jpg"), ("PNG", "*.png"), ("GIF", "*.gif"), ("All Files", "*.*")])
-        print(self.load_location_path)
+        self.load_location_path = filedialog.askopenfilename(initialdir='Images', title='Select a image!', multiple=True, defaultextension='.png', filetypes=[("JPEG", "*.jpg"), ("PNG", "*.png"), ("GIF", "*.gif"), ("All Files", "*.*")])
+        for img in self.load_location_path:
+            print(img)
 
     def sidebar_cam_port_event(self, option:str):
         if self.current_camera_port is not option:
