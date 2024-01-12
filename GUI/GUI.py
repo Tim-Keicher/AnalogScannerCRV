@@ -7,6 +7,8 @@ import re
 from PIL import Image
 from tkinter import filedialog
 
+from frame_show_images import ImageFrame
+
 ctk.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
 ctk.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
 
@@ -133,7 +135,13 @@ class App(ctk.CTk):
         self.sidebar_save_location.configure(state="disabled")
         self.appearance_mode_optionemenu.set("Dark")
         self.scaling_optionemenu.set("100%")
-
+        
+        #----------------------------------------------------------------------------------------------------
+        # test show images
+        self.image_frame = ImageFrame(self)
+        self.image_frame.grid(row=0, column=1, rowspan=3, columnspan=2, padx=10, pady=10)
+        example_image_paths = ["Images/Analogscan043.jpg"]#, "Images/Analogscan044.jpg", "Images/Analogscan045.jpg", "Images/Analogscan043.jpg", "Images/Analogscan044.jpg", "Images/Analogscan045.jpg"]
+        self.image_frame.update_images(example_image_paths)
     #----------------------------------------------------------------------------------------------------
     # Sidebar callback functions
     def sidebar_cam_img_event(self, option:str):
@@ -277,7 +285,7 @@ class App(ctk.CTk):
         if frame is not None:
             # OpenCV returns images in BGR format, so we need to convert it to RGB format
             rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            # Convert the image to a Tkinter PhotoImage
+            # Create a CTkImage object
             ctk_image = ctk.CTkImage(Image.fromarray(rgb_image), size=(850, 500))
             # Update the image in the Tkinter Label
             self.camera_label.configure(image=ctk_image)
