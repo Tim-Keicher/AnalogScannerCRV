@@ -3,6 +3,7 @@
 import customtkinter as ctk
 import os
 import cv2
+import re
 from PIL import Image
 from tkinter import filedialog
 
@@ -15,6 +16,7 @@ class App(ctk.CTk):
         # Set variables
         self.load_location_path:str = None
         self.save_location_path:str = None
+        self.current_camera_port:str = None
 
         # __init__ function for class Tk
         ctk.CTk.__init__(self, *args, **kwargs)
@@ -85,6 +87,7 @@ class App(ctk.CTk):
 
         # Set default values
         self.sidebar_camera_image.set("Image")
+        #self.sidebar_camera_port.set("port-1")
         self.sidebar_img_format.set("Small Format")
         self.sidebar_save_cb.deselect()
         self.sidebar_save_location.configure(state="disabled")
@@ -97,7 +100,20 @@ class App(ctk.CTk):
         if option == "Camera":
             self.sidebar_load.grid_forget()
             self.sidebar_camera_port.grid(row=2, column=0, padx=20, pady=10)
-            self.start_webcam()
+
+            # Check available cameras again and adapte visible ports
+            val = self.get_connected_camera_ports()
+            self.sidebar_camera_port.configure(values=val)
+            if self.sidebar_camera_port.get() == "no cameras":
+                self.sidebar_camera_port.set(val[0])    # update only, if no camera was detected before
+
+            # Get current port from option menu
+            self.current_camera_port = self.sidebar_camera_port.get()
+
+            # Get camera port from string
+            match = re.search(r'\bport-(\d+)\b', self.current_camera_port)
+            if match:
+                self.start_webcam(int(match.group(1)))
         else:
             self.sidebar_camera_port.grid_forget()
             self.sidebar_load.grid(row=2, column=0, padx=20, pady=10)
@@ -108,7 +124,16 @@ class App(ctk.CTk):
         print(self.load_location_path)
 
     def sidebar_cam_port_event(self, option:str):
-        print(option)
+        if self.current_camera_port is not option:
+            self.current_camera_port = option
+
+            # stop current webcam first
+            self.stop_webcam()
+
+            # Switch camera
+            match = re.search(r'\bport-(\d+)\b', self.current_camera_port)
+            if match:
+                self.start_webcam(int(match.group(1)))
         
     def sidebar_format_event(self, option:str):
         print(option)
@@ -135,9 +160,14 @@ class App(ctk.CTk):
 
     #----------------------------------------------------------------------------------------------------
     # Camera functions
-    def start_webcam(self):
+    def start_webcam(self, port:int=None):
+        # check for a available camera port
+        if port == None:
+            print("Warning: No camera detected!")
+            return
+
         # Start the webcam
-        self.video_capture = cv2.VideoCapture(0)
+        self.video_capture = cv2.VideoCapture(port)
 
         # Create a Tkinter Label to display the camera image
         self.camera_label = ctk.CTkLabel(self, text="")
@@ -173,10 +203,15 @@ class App(ctk.CTk):
         index = 0
         while True:
             # Try to open the camera with the current index
-            cap = cv2.VideoCapture(index)
+            try:
+                cap = cv2.VideoCapture(index)
+            except:
+                pass
             
             # Check if the camera is opened successfully
             if not cap.isOpened():
+                if not connected_ports: # add label if no camera is available
+                    connected_ports.append("no cameras")
                 break
 
             # Release the camera capture object
