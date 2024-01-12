@@ -135,17 +135,13 @@ class App(ctk.CTk):
         self.sidebar_save_location.configure(state="disabled")
         self.appearance_mode_optionemenu.set("Dark")
         self.scaling_optionemenu.set("100%")
+
+        # Create a Tkinter Label to display the camera image
+        self.camera_label = ctk.CTkLabel(self, text="")
         
-        #----------------------------------------------------------------------------------------------------
-        # test show images
+        # Create image frame
         self.image_frame = ImageFrame(self)
-        self.image_frame.grid(row=0, column=1, rowspan=3, columnspan=2, padx=10, pady=10)
-        example_image_paths = ["Images/Analogscan043.jpg", "Images/Analogscan044.jpg", "Images/Analogscan045.jpg", "Images/Analogscan043.jpg", "Images/Analogscan044.jpg", "Images/Analogscan045.jpg"]
-        imgs = []
-        for path in example_image_paths:
-            imgs.append(Image.open(path))
-        
-        self.image_frame.update_images(imgs)
+
     #----------------------------------------------------------------------------------------------------
     # Sidebar callback functions
     def sidebar_cam_img_event(self, option:str):
@@ -158,6 +154,9 @@ class App(ctk.CTk):
         if option == "Camera":
             self.sidebar_load.grid_forget()
             self.sidebar_camera_port.grid(row=2, column=0, padx=20, pady=10)
+
+            # Remove image frame
+            self.image_frame.grid_forget()
 
             # Check available cameras again and adapte visible ports
             val = self.get_connected_camera_ports()
@@ -236,7 +235,11 @@ class App(ctk.CTk):
         Handles events when the "Process" button is clicked.
         Initiates the image processing or camera capturing based on the selected mode.
         """
-        print("sidebar_btn_process_event click")
+        #TODO: just for testing GUI
+        if self.sidebar_camera_image.get() == "Image":
+            self.stop_webcam()
+            self.image_frame.grid(row=0, column=1, rowspan=3, columnspan=2, padx=10, pady=10)
+            self.image_frame.update_images(example_function_to_display_images())
 
     def change_appearance_mode_event(self, new_appearance_mode: str):
         """
@@ -274,8 +277,7 @@ class App(ctk.CTk):
         # Start the webcam
         self.video_capture = cv2.VideoCapture(port)
 
-        # Create a Tkinter Label to display the camera image
-        self.camera_label = ctk.CTkLabel(self, text="")
+        # Set camera_label grid
         self.camera_label.grid(row=0, column=1, rowspan=7, padx=20, pady=20)
 
         # Start the update function
@@ -302,8 +304,11 @@ class App(ctk.CTk):
         Stops the webcam and clears the camera image from the GUI.
         """
         self.after_cancel(self.update_camera)
-        self.video_capture.release()
-        self.camera_label.destroy()
+        try:
+            self.video_capture.release()
+        except:
+            print("no camera frame on work")
+        self.camera_label.grid_forget()
 
     def get_connected_camera_ports(self):
         """
@@ -340,6 +345,15 @@ class App(ctk.CTk):
 
         return connected_ports
         
+
+# This function is to show example images with the image frame. It returns the images
+def example_function_to_display_images():
+    example_image_paths = ["Images/Analogscan043.jpg", "Images/Analogscan044.jpg", "Images/Analogscan045.jpg", "Images/Analogscan043.jpg", "Images/Analogscan044.jpg", "Images/Analogscan045.jpg"]
+    imgs = []
+    for path in example_image_paths:
+        imgs.append(Image.open(path))
+
+    return imgs
 
 if __name__ == '__main__':
     app = App()
