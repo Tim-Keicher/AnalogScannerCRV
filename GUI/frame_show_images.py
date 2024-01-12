@@ -1,13 +1,32 @@
 import customtkinter as ctk
 
 class ImageFrame(ctk.CTkFrame):
+    """
+    A custom tkinter frame designed to display a dynamic number of images in a grid layout.
+    The layout adjusts based on the count of images, arranging them in 1xN (N up to 3), 2x2, 
+    or 2x3 formats.
+    """
     def __init__(self, parent, *args, **kwargs):
-        ctk.CTkFrame.__init__(self, parent, *args, **kwargs)
+        """
+        Initializes the ImageFrame with a list to store image labels.
 
-        # Create a list to store image labels
-        self.image_labels = []
+        Parameters:
+            parent (tkinter.Widget): The parent widget.
+            *args, **kwargs: Additional arguments and keyword arguments to pass to the CTkFrame constructor.
+        """
+        ctk.CTkFrame.__init__(self, parent, *args, **kwargs)
+        self.image_labels = []  # List to store image label
 
     def update_images(self, images):
+        """
+        Clears existing image labels and dynamically creates new labels based on the count of images.
+        The layout adjusts to accommodate up to 6 images.
+        Calculates the appropriate grid size and image size based on the number of images.
+        Uses CTkImage for compatibility and prevents images from being garbage collected.
+
+        Parameters:
+            images (list): A list of images to be displayed.
+        """
         # Clear existing labels
         for label in self.image_labels:
             label.destroy()
@@ -40,7 +59,16 @@ class ImageFrame(ctk.CTkFrame):
             self.image_labels.append(label)
 
     def calculate_rows_columns(self, image_count):
-        # Determine the layout based on the image count
+        """
+        Determines the layout based on the count of images.
+        Returns the number of rows and columns suitable for up to 6 images.
+
+        Parameters:
+            image_count (int): The count of images.
+
+        Returns:
+            tuple: A tuple representing the number of rows and columns for the grid layout.
+        """
         if image_count <= 3:
             return 1, image_count
         elif image_count == 4:
