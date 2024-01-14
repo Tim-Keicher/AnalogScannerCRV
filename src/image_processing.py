@@ -107,7 +107,6 @@ class ImageProcessing:
         filtered_contours = []
         for cont in contours:
             if cont.size >= 400:
-                print(f'[DEBUG] Contours Size: {cont.size}')
                 cv2.drawContours(output, [contours[0]], -1, (0, 255, 0), 20)
                 cv2.drawContours(mask, [cont], -1, (0, 0, 0), thickness=cv2.FILLED)
                 filtered_contours.append(cont)
@@ -188,7 +187,9 @@ class ImageProcessing:
                 cuttingWidth = int(cuttingHeight * 90 / 100)
                 cutStrip.append(img[cuttingHeight:h - cuttingHeight, cuttingWidth:w - cuttingWidth])
             elif boundaryType == self.ns.name_dia:
-                pass
+                cuttingHeight = int(h*15/100)
+                cuttingWidth = int(w*22/100)
+                cutStrip.append(img[cuttingHeight:h - cuttingHeight, cuttingWidth:w - cuttingWidth])
             else:
                 print(f'[WARNING] Unknown BoundaryType: {boundaryType}')
         return cutStrip
