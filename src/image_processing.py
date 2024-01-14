@@ -216,9 +216,14 @@ class ImageProcessing:
             raise ValueError("Invalid input image. Please provide a valid NumPy array.")
         output = img.copy()
         h, w = img.shape[:2]
-        filmSize = int(boundaryType)
+        filmSize = boundaryType
         print(f'[INFO] Filmsize: {filmSize}')
-        if filmSize == 35:
+        if int(filmSize) == 35:
+            ratio = 25 / h
+            width_ratio = 36 / ratio
+            n_images = int(w / width_ratio)
+            singleImageWidth = h * 36 / 25
+        elif filmSize == 'DIAS':
             ratio = 25 / h
             width_ratio = 36 / ratio
             n_images = int(w / width_ratio)
@@ -228,6 +233,7 @@ class ImageProcessing:
             width_ratio = 90 / ratio
             n_images = int(w / width_ratio)
             singleImageWidth = h * 90 / 60
+
         print(f'[INFO] Calculated images: {n_images}')
         print(f'[INFO] Calculated single image width: {singleImageWidth}')
 

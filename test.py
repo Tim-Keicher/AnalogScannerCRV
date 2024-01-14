@@ -21,17 +21,26 @@ def main():
 
     ### Cut Images ###
     strips = proc.cutStrip(img, boundaryType=boundaryType, visualizeSteps=True)
+
     for strip in strips:
         #proc.showImg(window_name='strip', img=strip)
+        height, width = img.shape[:2]
+        if height > width:
+            print('[INFO] Rotation have to be done')
+            strip = cv2.rotate(src=strip, rotateCode=cv2.ROTATE_90_CLOCKWISE)
 
         single_images, strip = proc.cutSingleImgs(strip, visualizeSteps=False, boundaryType=boundaryType)
         print(f'[INFO] {len(single_images)} Single Images')
-        for img in single_images:
 
-            ### Bilder invertieren ###
-            if strip is not None:
-                invertedImage = proc.invertImg(negative_img=img, offset_img=strip, negative_type=negativeType, visualizeSteps=True)
-                #proc.showImg(window_name='invertedImage', img=invertedImage)
+        if boundaryType != 'DIAS':
+            finished_imgs = []
+            for img in single_images:
+
+                ### Bilder invertieren ###
+                if strip is not None:
+                    invertedImage = proc.invertImg(negative_img=img, offset_img=strip, negative_type=negativeType, visualizeSteps=True)
+                    finished_imgs.append(invertedImage)
+                    #proc.showImg(window_name='invertedImage', img=invertedImage)
 
     ### Bilder Speichern ###
 
