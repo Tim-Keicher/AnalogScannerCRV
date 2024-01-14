@@ -249,14 +249,14 @@ class App(ctk.CTk):
         if self.sidebar_camera_image.get() == self.ns.name_mode_image:
             for img in self.dataset:
                 ### Cut Images ###
-                strips = self.processing.cutStrip(img, boundaryType=boundaryType, visualizeSteps=True)
+                strips = self.processing.cutStrip(img, boundaryType=boundaryType, visualizeSteps=self.ns.debugging_mode)
                 for strip in strips:
                     # self.processing.showImg(window_name='strip', img=strip)
                     height, width = img.shape[:2]
                     if height > width:
                         strip = cv2.rotate(src=strip, rotateCode=cv2.ROTATE_90_CLOCKWISE)
 
-                    single_images, strip = self.processing.cutSingleImgs(strip, visualizeSteps=True, boundaryType=boundaryType)
+                    single_images, strip = self.processing.cutSingleImgs(strip, visualizeSteps=self.ns.debugging_mode, boundaryType=boundaryType)
                     print(f'[INFO] Found {len(single_images)} single images')
 
                     if self.sidebar_img_format.get != self.ns.name_dia:
@@ -265,10 +265,11 @@ class App(ctk.CTk):
                             ### Invert images if needed ###
                             if strip is not None:
                                 invertedImage = self.processing.invertImg(negative_img=img, offset_img=strip,
-                                                               negative_type=negativeType, visualizeSteps=True)
-                                finished_imgs.append(invertedImage)
+                                                               negative_type=negativeType, visualizeSteps=self.ns.debugging_mode)
+                                finished_imgs.append(Image.fromarray(invertedImage))
 
-                                #self.image_frame.update_images(finished_imgs)
+                    self.image_frame.grid(row=0, column=1, rowspan=3, columnspan=2, padx=10, pady=10)
+                    self.image_frame.update_images(finished_imgs)
         # Try to use camera
         else:
             try:
@@ -276,14 +277,13 @@ class App(ctk.CTk):
                 img = self.getCamImage()
 
                 ### Cut Images ###
-                strips = self.processing.cutStrip(img, boundaryType=boundaryType, visualizeSteps=True)
+                strips = self.processing.cutStrip(img, boundaryType=boundaryType, visualizeSteps=self.ns.debugging_mode)
                 for strip in strips:
-                    # self.processing.showImg(window_name='strip', img=strip)
                     height, width = img.shape[:2]
                     if height > width:
                         strip = cv2.rotate(src=strip, rotateCode=cv2.ROTATE_90_CLOCKWISE)
 
-                    single_images, strip = self.processing.cutSingleImgs(strip, visualizeSteps=True,
+                    single_images, strip = self.processing.cutSingleImgs(strip, visualizeSteps=self.ns.debugging_mode,
                                                                          boundaryType=boundaryType)
                     print(f'[INFO] Found {len(single_images)} single images')
 
@@ -294,18 +294,11 @@ class App(ctk.CTk):
                             if strip is not None:
                                 invertedImage = self.processing.invertImg(negative_img=img, offset_img=strip,
                                                                           negative_type=negativeType,
-                                                                          visualizeSteps=True)
+                                                                          visualizeSteps=self.ns.debugging_mode)
                                 finished_imgs.append(invertedImage)
             except:
                 print("[INFO] Not possible to load and process Image from Camera")
                 pass
-
-        #TODO: just for testing GUI
-        if self.sidebar_camera_image.get() == self.ns.name_mode_image:
-            pass
-            #self.stop_webcam()
-            # self.image_frame.grid(row=0, column=1, rowspan=3, columnspan=2, padx=10, pady=10)
-            #self.image_frame.update_images(example_function_to_display_images())
 
     def change_appearance_mode_event(self, new_appearance_mode: str):
         """
@@ -435,16 +428,7 @@ class App(ctk.CTk):
             # Check for a condition to exit the loop (if needed)
 
         return connected_ports
-        
 
-# This function is to show example images with the image frame. It returns the images
-def example_function_to_display_images():
-    example_image_paths = ["Images/Analogscan043.jpg", "Images/Analogscan044.jpg", "Images/Analogscan045.jpg", "Images/Analogscan043.jpg", "Images/Analogscan044.jpg", "Images/Analogscan045.jpg"]
-    imgs = []
-    for path in example_image_paths:
-        imgs.append(Image.open(path))
-
-    return imgs
 
 if __name__ == '__main__':
     app = App()

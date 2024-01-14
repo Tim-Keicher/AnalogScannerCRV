@@ -22,7 +22,7 @@ class ImageProcessing:
     """
 
     def __init__(self):
-        self.PATH_PROCESSED_IMG = "ProcessedImages/"
+        self.PATH_PROCESSED_IMG = "Saves/"
         self.config_cut_img_sep_lines = True
 
         self.ns = names.Names()

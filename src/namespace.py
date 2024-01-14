@@ -12,3 +12,5 @@ class Names:
 
         self.name_mode_image = "Image"
         self.name_mode_camera = "Camera"
+
+        self.debugging_mode = False
