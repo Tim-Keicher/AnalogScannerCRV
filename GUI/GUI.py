@@ -57,7 +57,7 @@ class App(ctk.CTk):
         ctk.CTk.__init__(self, *args, **kwargs)
 
         # Set window dimensions
-        self.geometry(f"{1100}x{580}")
+        self.geometry(f"{1100}x{610}")
 
         # Set window title
         self.title('Analog Scanner')
@@ -79,8 +79,8 @@ class App(ctk.CTk):
 
         # Create sidebar frame with widgets
         self.sidebar_frame = ctk.CTkFrame(self, width=140, corner_radius=0)
-        self.sidebar_frame.grid(row=0, column=0, rowspan=7, sticky="nsew")
-        self.sidebar_frame.grid_rowconfigure(7, weight=1)
+        self.sidebar_frame.grid(row=0, column=0, rowspan=8, sticky="nsew")
+        self.sidebar_frame.grid_rowconfigure(8, weight=1)
 
         # Label with HHN logo
         self.navigation_frame_label = ctk.CTkLabel(self.sidebar_frame, text=None, image=self.logo_image,
@@ -129,17 +129,17 @@ class App(ctk.CTk):
 
         # Label and OptionMenu for selecting appearance mode
         self.appearance_mode_label = ctk.CTkLabel(self.sidebar_frame, text="Appearance Mode:", anchor="w")
-        self.appearance_mode_label.grid(row=8, column=0, padx=20, pady=(10, 0))
+        self.appearance_mode_label.grid(row=9, column=0, padx=20, pady=(10, 0))
         self.appearance_mode_optionemenu = ctk.CTkOptionMenu(self.sidebar_frame, values=["Light", "Dark", "System"],
                                                              command=self.change_appearance_mode_event)
-        self.appearance_mode_optionemenu.grid(row=9, column=0, padx=20, pady=(10, 10))
+        self.appearance_mode_optionemenu.grid(row=10, column=0, padx=20, pady=(10, 10))
 
         # Label and OptionMenu for selecting UI scaling
         self.scaling_label = ctk.CTkLabel(self.sidebar_frame, text="UI Scaling:", anchor="w")
-        self.scaling_label.grid(row=10, column=0, padx=20, pady=(10, 0))
+        self.scaling_label.grid(row=11, column=0, padx=20, pady=(10, 0))
         self.scaling_optionemenu = ctk.CTkOptionMenu(self.sidebar_frame, values=["80%", "90%", "100%", "110%", "120%"],
                                                      command=self.change_scaling_event)
-        self.scaling_optionemenu.grid(row=11, column=0, padx=20, pady=(10, 20))
+        self.scaling_optionemenu.grid(row=12, column=0, padx=20, pady=(10, 20))
 
 
         # Set default values
@@ -260,18 +260,19 @@ class App(ctk.CTk):
         boundaryType = self.sidebar_img_format.get()
         negativeType = self.sidebar_img_negativeType.get()
         finished_imgs = []
+        print(self.sidebar_camera_image.get())
 
         if self.sidebar_camera_image.get() == self.ns.name_mode_image:
             for img in self.dataset:
                 ### Cut Images ###
-                strips = self.processing.cutStrip(img, boundaryType=boundaryType, visualizeSteps=False)
+                strips = self.processing.cutStrip(img, boundaryType=boundaryType, visualizeSteps=True)
                 for strip in strips:
                     # self.processing.showImg(window_name='strip', img=strip)
                     height, width = img.shape[:2]
                     if height > width:
                         strip = cv2.rotate(src=strip, rotateCode=cv2.ROTATE_90_CLOCKWISE)
 
-                    single_images, strip = self.processing.cutSingleImgs(strip, visualizeSteps=False, boundaryType=boundaryType)
+                    single_images, strip = self.processing.cutSingleImgs(strip, visualizeSteps=True, boundaryType=boundaryType)
                     print(f'[INFO] Found {len(single_images)} single images')
 
                     if self.sidebar_img_format.get != self.ns.name_dia:
@@ -280,39 +281,40 @@ class App(ctk.CTk):
                             ### Invert images if needed ###
                             if strip is not None:
                                 invertedImage = self.processing.invertImg(negative_img=img, offset_img=strip,
-                                                               negative_type=negativeType, visualizeSteps=False)
+                                                               negative_type=negativeType, visualizeSteps=True)
                                 finished_imgs.append(invertedImage)
-            # Try to use camera
-            else:
-                try:
-                    # ToDo: get the actual image of the camera
-                    img = getCamImage()
 
-                    ### Cut Images ###
-                    strips = self.processing.cutStrip(img, boundaryType=boundaryType, visualizeSteps=False)
-                    for strip in strips:
-                        # self.processing.showImg(window_name='strip', img=strip)
-                        height, width = img.shape[:2]
-                        if height > width:
-                            strip = cv2.rotate(src=strip, rotateCode=cv2.ROTATE_90_CLOCKWISE)
+                                #self.image_frame.update_images(finished_imgs)
+        # Try to use camera
+        else:
+            try:
+                # ToDo: get the actual image of the camera
+                img = self.getCamImage()
 
-                        single_images, strip = self.processing.cutSingleImgs(strip, visualizeSteps=False,
-                                                                             boundaryType=boundaryType)
-                        print(f'[INFO] Found {len(single_images)} single images')
+                ### Cut Images ###
+                strips = self.processing.cutStrip(img, boundaryType=boundaryType, visualizeSteps=True)
+                for strip in strips:
+                    # self.processing.showImg(window_name='strip', img=strip)
+                    height, width = img.shape[:2]
+                    if height > width:
+                        strip = cv2.rotate(src=strip, rotateCode=cv2.ROTATE_90_CLOCKWISE)
 
-                        if self.sidebar_img_format.get != self.ns.name_dia:
-                            finished_imgs = []
-                            for img in single_images:
-                                ### Invert Images if needed ###
-                                if strip is not None:
-                                    invertedImage = self.processing.invertImg(negative_img=img, offset_img=strip,
-                                                                              negative_type=negativeType,
-                                                                              visualizeSteps=False)
-                                    finished_imgs.append(invertedImage)
-                except:
-                    print("[INFO] Not possible to load and process Image from Camera")
-                    pass
+                    single_images, strip = self.processing.cutSingleImgs(strip, visualizeSteps=True,
+                                                                         boundaryType=boundaryType)
+                    print(f'[INFO] Found {len(single_images)} single images')
 
+                    if self.sidebar_img_format.get != self.ns.name_dia:
+                        finished_imgs = []
+                        for img in single_images:
+                            ### Invert Images if needed ###
+                            if strip is not None:
+                                invertedImage = self.processing.invertImg(negative_img=img, offset_img=strip,
+                                                                          negative_type=negativeType,
+                                                                          visualizeSteps=True)
+                                finished_imgs.append(invertedImage)
+            except:
+                print("[INFO] Not possible to load and process Image from Camera")
+                pass
 
         #TODO: just for testing GUI
         if self.sidebar_camera_image.get() == self.ns.name_mode_image:
@@ -379,6 +381,24 @@ class App(ctk.CTk):
             self.camera_label.image = ctk_image
         # Update the image again after a certain time (here: 30 milliseconds)
         self.after(30, self.update_camera)
+
+    def getCamImage(self):
+        """
+        Captures a single frame from the video capture source (camera).
+
+        Returns:
+            numpy.ndarray or None: The captured frame in RGB format (using OpenCV).
+                                  Returns None if no frame is captured.
+        """
+        _, frame = self.video_capture.read()  # Capture a frame from the video source
+
+        if frame is not None:
+            # Convert the frame from BGR to RGB format
+            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            return rgb_frame
+        else:
+            # Return None if no frame is captured
+            return None
 
     def stop_webcam(self):
         """
