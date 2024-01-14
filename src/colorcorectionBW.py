@@ -21,12 +21,12 @@ def bitwise(image_path, alpha=1.2, beta=1, showImage=False):
         cv2.destroyAllWindows()
 
 
-def  calcOffset(snipped):
+def calcOffset(snipped, verbose=False):
     img = cv2.cvtColor(snipped, cv2.COLOR_BGR2GRAY)
 
     average_value = int(img.mean())
-    print(f"Average Pixelvalue: {average_value}")
-
+    if verbose:
+        print(f"Average Pixelvalue: {average_value}")
     return average_value
 
 
@@ -44,8 +44,6 @@ def invert_with_offset(img, offset, showImage=False):
     factor = 255/MaxValue
 
     inverted_white_balance_img = np.multiply(inverted_white_balance_img, factor).astype('uint8')
-    print(inverted_white_balance_img)
-    print(np.max(inverted_white_balance_img))
     data = inverted_white_balance_img
 
     if showImage:
