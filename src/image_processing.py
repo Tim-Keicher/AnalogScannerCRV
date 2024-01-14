@@ -4,6 +4,7 @@ import datetime
 import src.colorcorectionBW as ccBW
 import src.colorcorrectionCOLOR as ccC
 
+import src.namespace as names
 
 class ImageProcessing:
     """A class for image processing operations, including strip cutting, individual image extraction, and saving.
@@ -21,13 +22,10 @@ class ImageProcessing:
     """
 
     def __init__(self):
-        self.scan_type = None
-        self.type_color = 'color'
-        self.type_bw = 'bw'
-
         self.PATH_PROCESSED_IMG = "ProcessedImages/"
         self.config_cut_img_sep_lines = True
 
+        self.ns = names.Names()
     # ------------------------------------------------------------------------------------------------------
     def process(self, img):
         """Process an input image by cutting strips, extracting individual images, and saving them.
@@ -157,7 +155,7 @@ class ImageProcessing:
             croped_img_array.append(cv2.warpPerspective(img, M, (max_width, max_height), flags=cv2.INTER_LINEAR))
 
         if visualizeSteps:
-            #self.showImg('thresh_otsu', thresh_otsu)
+            self.showImg('thresh_otsu', thresh_otsu)
             self.showImg('mask', mask)
             self.showImg('output', output)
 
@@ -181,15 +179,15 @@ class ImageProcessing:
         cutStrip = []
         for img in img_array:
             h, w = img.shape[:2]
-            if boundaryType == '35':
+            if boundaryType == self.ns.name_small_format:
                 cuttingHeight = int(h * 15 / 100)
                 cuttingWidth = int(cuttingHeight * 50 / 100)
                 cutStrip.append(img[cuttingHeight:h - cuttingHeight, cuttingWidth:w - cuttingWidth])
-            elif boundaryType == '120':
+            elif boundaryType == self.ns.name_medium_format:
                 cuttingHeight = int(h * 4 / 100)
                 cuttingWidth = int(cuttingHeight * 90 / 100)
                 cutStrip.append(img[cuttingHeight:h - cuttingHeight, cuttingWidth:w - cuttingWidth])
-            elif boundaryType == 'DIAS':
+            elif boundaryType == self.ns.name_dia:
                 pass
             else:
                 print(f'[WARNING] Unknown BoundaryType: {boundaryType}')
@@ -216,14 +214,13 @@ class ImageProcessing:
             raise ValueError("Invalid input image. Please provide a valid NumPy array.")
         output = img.copy()
         h, w = img.shape[:2]
-        filmSize = boundaryType
-        print(f'[INFO] Filmsize: {filmSize}')
-        if int(filmSize) == 35:
+        print(f'[INFO] Film type: {boundaryType}')
+        if boundaryType == self.ns.name_small_format:
             ratio = 25 / h
             width_ratio = 36 / ratio
             n_images = int(w / width_ratio)
             singleImageWidth = h * 36 / 25
-        elif filmSize == 'DIAS':
+        elif boundaryType == self.ns.name_dia:
             ratio = 25 / h
             width_ratio = 36 / ratio
             n_images = int(w / width_ratio)
@@ -310,12 +307,12 @@ class ImageProcessing:
                     ReturnError: If the negative_type is not valid type.
                 """
         # Invert colored image
-        if negative_type is self.type_color:
+        if negative_type is self.ns.name_negative_color:
             offset = ccC.calcOffset(offset_img, verbose=False)
             inverted_image = ccC.invert_with_offset(img=negative_img, offset=offset, showImage=visualizeSteps)
 
         # Invert black and white image
-        elif negative_type is self.type_bw:
+        elif negative_type is self.ns.name_negative_bw:
             offset = ccBW.calcOffset(offset_img, verbose=False)
             inverted_image = ccBW.invert_with_offset(img=negative_img, offset=offset, showImage=visualizeSteps)
 
