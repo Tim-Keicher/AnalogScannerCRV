@@ -57,7 +57,7 @@ class App(ctk.CTk):
         ctk.CTk.__init__(self, *args, **kwargs)
 
         # Set window dimensions
-        self.geometry(f"{1100}x{610}")
+        self.geometry(f"{1100}x{580}")
 
         # Set window title
         self.title('Analog Scanner')
@@ -79,8 +79,8 @@ class App(ctk.CTk):
 
         # Create sidebar frame with widgets
         self.sidebar_frame = ctk.CTkFrame(self, width=140, corner_radius=0)
-        self.sidebar_frame.grid(row=0, column=0, rowspan=8, sticky="nsew")
-        self.sidebar_frame.grid_rowconfigure(8, weight=1)
+        self.sidebar_frame.grid(row=0, column=0, rowspan=7, sticky="nsew")
+        self.sidebar_frame.grid_rowconfigure(7, weight=1)
 
         # Label with HHN logo
         self.navigation_frame_label = ctk.CTkLabel(self.sidebar_frame, text=None, image=self.logo_image,
@@ -113,41 +113,35 @@ class App(ctk.CTk):
                                                           command=self.sidebar_format_event)
         self.sidebar_img_negativeType.grid(row=4, column=0, padx=20, pady=10)
 
-        # Checkbox to enable/disable image saving
-        self.sidebar_save_cb = ctk.CTkCheckBox(self.sidebar_frame, text="Save Images", command=self.sidebar_cb_save_event)
-        self.sidebar_save_cb.grid(row=5, column=0, padx=20, pady=10)
-
-        # Button to set save location
-        self.sidebar_save_location = ctk.CTkButton(self.sidebar_frame, text="Save Location", image=self.save_icon,
-                                                    anchor='w', command=self.sidebar_btn_save_event)
-        self.sidebar_save_location.grid(row=6, column=0, padx=20, pady=10)
+        # Button to save the images
+        self.sidebar_save = ctk.CTkButton(self.sidebar_frame, text="Save", image=self.save_icon,
+                                          anchor='w', command=self.sidebar_btn_save_event)
+        self.sidebar_save.grid(row=5, column=0, padx=20, pady=10)
 
         # Button to initiate image processing
         self.sidebar_process = ctk.CTkButton(self.sidebar_frame, text="Process", image=self.play_icon, anchor='w',
                                              command=self.sidebar_btn_process_event)
-        self.sidebar_process.grid(row=7, column=0, padx=20, pady=10)
+        self.sidebar_process.grid(row=6, column=0, padx=20, pady=10)
 
         # Label and OptionMenu for selecting appearance mode
         self.appearance_mode_label = ctk.CTkLabel(self.sidebar_frame, text="Appearance Mode:", anchor="w")
-        self.appearance_mode_label.grid(row=9, column=0, padx=20, pady=(10, 0))
+        self.appearance_mode_label.grid(row=8, column=0, padx=20, pady=(10, 0))
         self.appearance_mode_optionemenu = ctk.CTkOptionMenu(self.sidebar_frame, values=["Light", "Dark", "System"],
                                                              command=self.change_appearance_mode_event)
-        self.appearance_mode_optionemenu.grid(row=10, column=0, padx=20, pady=(10, 10))
+        self.appearance_mode_optionemenu.grid(row=9, column=0, padx=20, pady=(10, 10))
 
         # Label and OptionMenu for selecting UI scaling
         self.scaling_label = ctk.CTkLabel(self.sidebar_frame, text="UI Scaling:", anchor="w")
-        self.scaling_label.grid(row=11, column=0, padx=20, pady=(10, 0))
+        self.scaling_label.grid(row=10, column=0, padx=20, pady=(10, 0))
         self.scaling_optionemenu = ctk.CTkOptionMenu(self.sidebar_frame, values=["80%", "90%", "100%", "110%", "120%"],
                                                      command=self.change_scaling_event)
-        self.scaling_optionemenu.grid(row=12, column=0, padx=20, pady=(10, 20))
+        self.scaling_optionemenu.grid(row=11, column=0, padx=20, pady=(10, 20))
 
 
         # Set default values
         self.sidebar_camera_image.set(self.ns.name_mode_image)
         self.sidebar_img_format.set(self.ns.name_small_format)
         self.sidebar_img_negativeType.set(self.ns.name_negative_bw)
-        self.sidebar_save_cb.deselect()
-        self.sidebar_save_location.configure(state="disabled")
         self.appearance_mode_optionemenu.set("Dark")
         self.scaling_optionemenu.set("90%")
 
@@ -234,22 +228,12 @@ class App(ctk.CTk):
         """
         print(option)
 
-    def sidebar_cb_save_event(self):
-        """
-        Handles events when the "Save Images" checkbox is clicked.
-        Enables or disables the "Save Location" button based on checkbox state.
-        """
-        if self.sidebar_save_cb.get():
-            self.sidebar_save_location.configure(state="enabled")
-        else:
-            self.sidebar_save_location.configure(state="disabled")
-
     def sidebar_btn_save_event(self):
         """
-        Handles events when the "Save Location" button is clicked.
+        Handles events when the "Save" button is clicked.
         Opens a file dialog for selecting the location to save processed images.
         """
-        self.save_location_path = filedialog.asksaveasfilename(initialdir='Images', title='Select save location!', defaultextension='.png', filetypes=[("JPEG", "*.jpg"), ("PNG", "*.png"), ("GIF", "*.gif"), ("All Files", "*.*")])
+        self.save_location_path = filedialog.asksaveasfilename(initialdir='Images', title='Save as:', defaultextension='.png', filetypes=[("JPEG", "*.jpg"), ("PNG", "*.png"), ("GIF", "*.gif"), ("All Files", "*.*")])
         print(self.save_location_path)
 
     def sidebar_btn_process_event(self):
