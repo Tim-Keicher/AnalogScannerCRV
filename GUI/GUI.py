@@ -242,80 +242,53 @@ class App(ctk.CTk):
         Initiates the image processing or camera capturing based on the selected mode.
         """
         boundaryType = self.sidebar_img_format.get()
-        print(f'boundary{boundaryType}')
         negativeType = self.sidebar_img_negativeType.get()
-        finished_imgs = []
-        print(self.sidebar_camera_image.get())
+        finished_imgs =[]
 
-        if self.sidebar_camera_image.get() == self.ns.name_mode_image:
-            for img in self.dataset:
-                ### Cut Images ###
-                strips = self.processing.cutStrip(img, boundaryType=boundaryType, visualizeSteps=self.ns.debugging_mode)
-                if boundaryType != self.ns.name_dia:
-                    for strip in strips:
-                        # self.processing.showImg(window_name='strip', img=strip)
-                        height, width = img.shape[:2]
-                        if height > width:
-                            strip = cv2.rotate(src=strip, rotateCode=cv2.ROTATE_90_CLOCKWISE)
+        if self.sidebar_camera_image.get() == self.ns.name_mode_camera:
+            self.dataset = []
+            self.dataset.append(self.getCamImage())
+            for im in self.dataset:
+                self.processing.showImg('img', im)
 
-                        single_images, strip = self.processing.cutSingleImgs(strip, visualizeSteps=self.ns.debugging_mode, boundaryType=boundaryType)
-                        print(f'[INFO] Found {len(single_images)} single images')
-                        display_img = []
-                        for img in single_images:
-                            ### Invert images ###
-                            if strip is not None:
-                                invertedImage = self.processing.invertImg(negative_img=img, offset_img=strip,
-                                                               negative_type=negativeType, visualizeSteps=self.ns.debugging_mode)
-                                display_img.append(Image.fromarray(invertedImage))
-                                finished_imgs.append(Image.fromarray(invertedImage))
-
-                    print(f'[INFO] {len(display_img)} images get displayed')
-                    self.image_frame.grid(row=0, column=1, rowspan=3, columnspan=2, padx=10, pady=10)
-                    self.image_frame.update_images(display_img)
-
-                else:
-                    display_img = []
-                    for i, dia in enumerate(strips):
-                        if i < 6:
-                            display_img.append(Image.fromarray(cv2.rotate(cv2.cvtColor(dia, cv2.COLOR_BGR2RGB), cv2.ROTATE_90_CLOCKWISE)))
-
-                        finished_imgs.append(Image.fromarray(cv2.rotate(cv2.cvtColor(dia, cv2.COLOR_BGR2RGB), cv2.ROTATE_90_CLOCKWISE)))
-
-                    print(f'[INFO] {len(display_img)} images get displayed')
-                    self.image_frame.grid(row=0, column=1, rowspan=3, columnspan=2, padx=10, pady=10)
-                    self.image_frame.update_images(display_img)
-        # Try to use camera
-        else:
-            try:
-                # ToDo: get the actual image of the camera
-                img = self.getCamImage()
-
-                ### Cut Images ###
-                strips = self.processing.cutStrip(img, boundaryType=boundaryType, visualizeSteps=self.ns.debugging_mode)
+        for img in self.dataset:
+            ### Cut Images ###
+            strips = self.processing.cutStrip(img, boundaryType=boundaryType, visualizeSteps=self.ns.debugging_mode)
+            if boundaryType != self.ns.name_dia:
                 for strip in strips:
+                    # self.processing.showImg(window_name='strip', img=strip)
                     height, width = img.shape[:2]
                     if height > width:
                         strip = cv2.rotate(src=strip, rotateCode=cv2.ROTATE_90_CLOCKWISE)
 
-                    single_images, strip = self.processing.cutSingleImgs(strip, visualizeSteps=self.ns.debugging_mode,
-                                                                         boundaryType=boundaryType)
+                    single_images, strip = self.processing.cutSingleImgs(strip, visualizeSteps=self.ns.debugging_mode, boundaryType=boundaryType)
                     print(f'[INFO] Found {len(single_images)} single images')
+                    display_img = []
+                    for img in single_images:
+                        ### Invert images ###
+                        if strip is not None:
+                            invertedImage = self.processing.invertImg(negative_img=img, offset_img=strip,
+                                                           negative_type=negativeType, visualizeSteps=self.ns.debugging_mode)
+                            display_img.append(Image.fromarray(invertedImage))
+                            finished_imgs.append(Image.fromarray(invertedImage))
 
-                    if self.sidebar_img_format.get != self.ns.name_dia:
-                        finished_imgs = []
-                        for img in single_images:
-                            ### Invert Images if needed ###
-                            if strip is not None:
-                                invertedImage = self.processing.invertImg(negative_img=img, offset_img=strip,
-                                                                          negative_type=negativeType,
-                                                                          visualizeSteps=self.ns.debugging_mode)
-                                finished_imgs.append(invertedImage)
-                    # Handle DIAS
+                self.image_frame.grid(row=0, column=1, rowspan=3, columnspan=2, padx=10, pady=10)
+                self.image_frame.update_images(display_img)
+
+            else:
+                display_img = []
+                for i, dia in enumerate(strips):
+                    if self.sidebar_camera_image.get() == self.ns.name_mode_camera:
+                        dia = Image.fromarray(dia)
                     else:
-                        finished_imgs=single_images
-            except:
-                print("[INFO] Not possible to load and process Image from Camera")
-                pass
+                        dia = Image.fromarray(cv2.rotate(cv2.cvtColor(dia, cv2.COLOR_BGR2RGB), cv2.ROTATE_90_CLOCKWISE))
+                    if i < 6:
+                        display_img.append(dia)
+                    finished_imgs.append(dia)
+
+                print(f'[INFO] {len(display_img)} images get displayed')
+                self.image_frame.grid(row=0, column=1, rowspan=3, columnspan=2, padx=10, pady=10)
+                self.image_frame.update_images(display_img)
 
     def change_appearance_mode_event(self, new_appearance_mode: str):
         """
