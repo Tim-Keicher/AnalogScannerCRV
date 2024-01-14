@@ -1,9 +1,10 @@
 import cv2
 import numpy as np
 import datetime
-import colorcorectionBW as ccBW
-import colorcorrectionCOLOR as ccC
+import src.colorcorectionBW as ccBW
+import src.colorcorrectionCOLOR as ccC
 
+import src.namespace as names
 
 class ImageProcessing:
     """A class for image processing operations, including strip cutting, individual image extraction, and saving.
@@ -21,14 +22,10 @@ class ImageProcessing:
     """
 
     def __init__(self):
-        self.scan_type = None
-        self.type_color = 'color'
-        self.type_bw = 'bw'
-
-        self.showImage = False
-        self.PATH_PROCESSED_IMG = "ProcessedImages/"
+        self.PATH_PROCESSED_IMG = "Saves/"
         self.config_cut_img_sep_lines = True
 
+        self.ns = names.Names()
     # ------------------------------------------------------------------------------------------------------
     def process(self, img):
         """Process an input image by cutting strips, extracting individual images, and saving them.
@@ -60,14 +57,16 @@ class ImageProcessing:
         exit()
 
     # ------------------------------------------------------------------------------------------------------
-    def cutStrip(self, img):
+    def cutStrip(self, img, boundaryType, visualizeSteps=False):
         """Cuts a rectangular strip from the input image based on corner detection.
 
         Args:
             img (numpy.ndarray): The input image.
+            boundaryType (string): Defines what kind of film size ['DIAS', '35', '120']
+            visualizeSteps(boolean): Activate the visualisation of all Steps
 
         Returns:
-            numpy.ndarray: The cropped image strip.
+            final_array[numpy.ndarray] One or more cropped image strips.
 
         Notes:
             The method performs the following steps:
@@ -86,6 +85,8 @@ class ImageProcessing:
         # Check if the image was successfully loaded
         if img is None or not isinstance(img, np.ndarray):
             raise ValueError("Invalid input image. Please provide a valid NumPy array.")
+        output = img.copy()
+        croped_img_array = []
 
         # Convert the image to grayscale
         gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -93,53 +94,117 @@ class ImageProcessing:
         # Apply a Gaussian Blur
         blur = cv2.GaussianBlur(gray_img, (7, 7), 1)
 
-        # Define Kernel Size
-        kernel = np.ones((35, 35), np.uint8)
-
         # Apply threshold based on Otsu
         _, thresh_otsu = cv2.threshold(blur, 0, 255, cv2.THRESH_OTSU)
-        # Close von Holes, delete blind Spots
-        closed_img_otsu = cv2.morphologyEx(thresh_otsu, cv2.MORPH_CLOSE, kernel)
-        edges_otsu = cv2.Canny(closed_img_otsu, 30, 150)
+        contours, _ = cv2.findContours(cv2.bitwise_not(thresh_otsu), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        print(f'[DEBUG] {len(contours)} contours found')
 
-        # detect corners with the goodFeaturesToTrack function.
-        corners = cv2.goodFeaturesToTrack(closed_img_otsu, 4, 0.5, 10)
-        corners = np.int0(corners)
+        # Generate a mask to define where the objects are
+        mask = np.zeros_like(img)
+        mask = cv2.bitwise_not(mask)
+        mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
 
-        pt_A = corners[0][0]
-        pt_B = corners[1][0]
-        pt_C = corners[2][0]
-        pt_D = corners[3][0]
+        filtered_contours = []
+        for cont in contours:
+            if cont.size >= 400:
+                print(f'[DEBUG] Contours Size: {cont.size}')
+                cv2.drawContours(output, [contours[0]], -1, (0, 255, 0), 20)
+                cv2.drawContours(mask, [cont], -1, (0, 0, 0), thickness=cv2.FILLED)
+                filtered_contours.append(cont)
+        print(f'[DEBUG] {len(filtered_contours)} Filtered Contours found')
 
-        # Correct the alignment of the whole stripe
-        width_AD = np.sqrt(((pt_A[0] - pt_D[0]) ** 2) + ((pt_A[1] - pt_D[1]) ** 2))
-        width_BC = np.sqrt(((pt_B[0] - pt_C[0]) ** 2) + ((pt_B[1] - pt_C[1]) ** 2))
-        max_width = max(int(width_AD), int(width_BC))
+        for cont in filtered_contours:
+            epsilon = 0.02 * cv2.arcLength(cont, True)
+            corners = cv2.approxPolyDP(cont, epsilon, True)
 
-        height_AB = np.sqrt(((pt_A[0] - pt_B[0]) ** 2) + ((pt_A[1] - pt_B[1]) ** 2))
-        height_CD = np.sqrt(((pt_C[0] - pt_D[0]) ** 2) + ((pt_C[1] - pt_D[1]) ** 2))
-        max_height = max(int(height_AB), int(height_CD))
+            for point in corners:
+                x, y = point[0]
+                cv2.circle(output, (x, y), 5, (0, 0, 255), -1)
 
-        input_pts = np.float32([pt_A, pt_B, pt_C, pt_D])
-        output_pts = np.float32([[0, 0],
-                                 [0, max_height - 1],
-                                 [max_width - 1, max_height - 1],
-                                 [max_width - 1, 0]])
-        M = cv2.getPerspectiveTransform(input_pts, output_pts)
+            corners = [tuple(point[0]) for point in corners]
 
-        croped_img = cv2.warpPerspective(img, M, (max_width, max_height), flags=cv2.INTER_LINEAR)
+            sorted_coordinates = sorted(corners, key=lambda coord: coord[0])
+            left_coordinates = sorted_coordinates[:2]
+            right_coordinates = sorted_coordinates[2:]
 
-        return croped_img
+            # top left corner
+            pt_A = sorted(left_coordinates, key=lambda coord: coord[1])[0]
+            # bottom left corner
+            pt_B = sorted(left_coordinates, key=lambda coord: coord[1])[1]
+            # bottom right corner
+            pt_C = sorted(right_coordinates, key=lambda coord: coord[1])[1]
+            # top right corner
+            pt_D = sorted(right_coordinates, key=lambda coord: coord[1])[0]
+
+            # Correct the alignment of the whole stripe
+            width_AD = np.sqrt(((pt_A[0] - pt_D[0]) ** 2) + ((pt_A[1] - pt_D[1]) ** 2))
+            width_BC = np.sqrt(((pt_B[0] - pt_C[0]) ** 2) + ((pt_B[1] - pt_C[1]) ** 2))
+            max_width = max(int(width_AD), int(width_BC))
+
+            height_AB = np.sqrt(((pt_A[0] - pt_B[0]) ** 2) + ((pt_A[1] - pt_B[1]) ** 2))
+            height_CD = np.sqrt(((pt_C[0] - pt_D[0]) ** 2) + ((pt_C[1] - pt_D[1]) ** 2))
+            max_height = max(int(height_AB), int(height_CD))
+
+            input_pts = np.float32([pt_A, pt_B, pt_C, pt_D])
+            output_pts = np.float32([[0, 0],
+                                     [0, max_height - 1],
+                                     [max_width - 1, max_height - 1],
+                                     [max_width - 1, 0]])
+            M = cv2.getPerspectiveTransform(input_pts, output_pts)
+
+            croped_img_array.append(cv2.warpPerspective(img, M, (max_width, max_height), flags=cv2.INTER_LINEAR))
+
+        if visualizeSteps:
+            self.showImg('thresh_otsu', thresh_otsu)
+            self.showImg('mask', mask)
+            self.showImg('output', output)
+
+        final_array = self.resizeStripByType(img_array=croped_img_array, boundaryType=boundaryType)
+        return final_array
 
     # ------------------------------------------------------------------------------------------------------
-    def cutSingleImgs(self, img):
+    def resizeStripByType(self, img_array, boundaryType):
+        """Resize the strips to cut off the edge
+
+                Args:
+                    img_array[numpy.ndarray]: The array of inputs.
+                    boundaryType (string): Defines what kind of film size ['DIAS', '35', '120']
+                    visualizeSteps(boolean): Activate the visualisation of all Steps
+
+                Returns:
+                    cutStrip[numpy.ndarray]: One or more cropped image strips.
+
+                Notes:
+                """
+        cutStrip = []
+        for img in img_array:
+            h, w = img.shape[:2]
+            if boundaryType == self.ns.name_small_format:
+                cuttingHeight = int(h * 15 / 100)
+                cuttingWidth = int(cuttingHeight * 50 / 100)
+                cutStrip.append(img[cuttingHeight:h - cuttingHeight, cuttingWidth:w - cuttingWidth])
+            elif boundaryType == self.ns.name_medium_format:
+                cuttingHeight = int(h * 4 / 100)
+                cuttingWidth = int(cuttingHeight * 90 / 100)
+                cutStrip.append(img[cuttingHeight:h - cuttingHeight, cuttingWidth:w - cuttingWidth])
+            elif boundaryType == self.ns.name_dia:
+                pass
+            else:
+                print(f'[WARNING] Unknown BoundaryType: {boundaryType}')
+        return cutStrip
+
+    # ------------------------------------------------------------------------------------------------------
+    def cutSingleImgs(self, img, boundaryType, visualizeSteps=False):
         """Cut and save individual images separated by vertical lines.
 
         Args:
             img (numpy.ndarray): The input image.
+            boundaryType (string): Defines what kind of film size ['DIAS', '35', '120']
+            visualizeSteps(boolean): Activate the visualisation of all Steps
 
         Returns:
-            List[numpy.ndarray]: A list of cropped images between separation lines.
+            cropped_imgs[numpy.ndarray]: A list of cropped images between separation lines.
+            strip(numpy.ndarray): Cut strip to calculate the offset
 
         Raises:
             ValueError: If the input image is not provided or is not a valid NumPy array.
@@ -147,51 +212,93 @@ class ImageProcessing:
         # Check if the image was successfully loaded
         if img is None or not isinstance(img, np.ndarray):
             raise ValueError("Invalid input image. Please provide a valid NumPy array.")
+        output = img.copy()
+        h, w = img.shape[:2]
+        print(f'[INFO] Film type: {boundaryType}')
+        if boundaryType == self.ns.name_small_format:
+            ratio = 25 / h
+            width_ratio = 36 / ratio
+            n_images = int(w / width_ratio)
+            singleImageWidth = h * 36 / 25
+        elif boundaryType == self.ns.name_dia:
+            ratio = 25 / h
+            width_ratio = 36 / ratio
+            n_images = int(w / width_ratio)
+            singleImageWidth = h * 36 / 25
+        else:
+            ratio = 60 / h
+            width_ratio = 90 / ratio
+            n_images = int(w / width_ratio)
+            singleImageWidth = h * 90 / 60
+
+        print(f'[INFO] Calculated images: {n_images}')
+        print(f'[INFO] Calculated single image width: {singleImageWidth}')
+
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+        # enhanced_edges = cv2.addWeighted(img, 1.5, cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR), 0.5, 0)
+        blur = cv2.GaussianBlur(gray, (7, 7), 1)
+        _, thresh_otsu = cv2.threshold(blur, 0, 255, cv2.THRESH_OTSU)
+        blacked = thresh_otsu.copy()
+        checkforBlack = np.any(thresh_otsu == 0, axis=0)
+
+        blacked[:, checkforBlack] = 0
+
+        coordinates = []
+        for x in range(w - 1):
+            # Get the points of the Binary change
+            if blacked[0, x] == 0 and blacked[0, x + 1] == 255 or blacked[0, x] == 255 and blacked[0, x + 1] == 0:
+                coordinates.append(x)
+
+        filtered_coords = []
+        for coord in coordinates:
+            if coord <= 10 or coord >= singleImageWidth * 90 / 100:
+                filtered_coords.append(coord)
+                cv2.line(output, (coord, 0), (coord, output.shape[0]), (0, 255, 0), 3)
+
+        cropped_imgs = []
 
         strip = None
+        firstImg = False
 
-        # Create a copy of the input image
-        negative = img.copy()
-
-        # Calculate column sums
-        column_sums = np.sum(negative, axis=0)
-
-        # Find split points (columns with pixel sum below a threshold)
-        split_points = np.where(column_sums > 25000)[0]
-
-        # Draw separation lines in the original image
-        for split_point in split_points:
-            cv2.line(negative, (split_point, 0), (split_point, negative.shape[0]), (0, 255, 0), 3)  # Draw separation lines (Color: 255)
-
-        if self.config_cut_img_sep_lines is True:
-            self.showImg('cut images: negative with separation lines', negative)
-
-        # Cut and save images between separation lines
-        cropped_imgs = []
-        for i in range(len(split_points) - 1):
-            start_row = split_points[i]
-            end_row = split_points[i + 1]
-
-            if end_row - start_row < 10 or end_row is None:
-                # Cut a strip to calculate the white balance value of the individual negative film
-                if strip is None:
-                    strip = img[:, start_row:start_row+9]
-                else:
-                    pass
+        for i in range(0, len(filtered_coords) - 1):
+            if filtered_coords[i] <= singleImageWidth * 85 / 100:
+                pass
             else:
-                # Crop the image between separation lines
-                cropped_imgs.append(img[:, start_row:end_row])
+                if filtered_coords[i] >= singleImageWidth * 85 / 100 and firstImg is False:
+                    cropped_imgs.append(img[:, 0:filtered_coords[i]])
+                    firstImg = True
+                elif i == len(filtered_coords) - 2 and w-filtered_coords[i + 1] >= singleImageWidth * 85 / 100:
+                    cropped_imgs.append(img[:, filtered_coords[i + 1]:w])
+
+                ofs = filtered_coords[i + 1] - filtered_coords[i]
+
+                if ofs > singleImageWidth * 85 / 100:
+                    cropped_imgs.append(img[:, filtered_coords[i]:filtered_coords[i+1]])
+                else:
+                    if strip is None:
+                        strip = img[:, filtered_coords[i]:filtered_coords[i+1]]
+
+                if w-filtered_coords[i + 1] <= singleImageWidth * 85 / 100:
+                    break
+
+        stacked = np.concatenate((thresh_otsu, blacked), axis=0)
+
+        if visualizeSteps:
+            self.showImg("output", output)
+            self.showImg("stacked", stacked)
 
         return cropped_imgs, strip
 
     # ------------------------------------------------------------------------------------------------------
-    def invertImg(self, negative_img, offset_img, negative_type):
+    def invertImg(self, negative_img, offset_img, negative_type, visualizeSteps=False):
         """ Invert the provided image and return it, based on the negative_type.
 
                 Args:
                     negative_img (numpy.ndarray): The negative input image.
                     offset_img (numpy.ndarray): Cutout of the negative strip (total white value).
                     negative_type (string): CHeck for Color or BW color detection.
+                    visualizeSteps(boolean): Activate the visualisation of all Steps
 
                 Returns:
                     inverted_image (numpy.ndarray): The inverted image
@@ -200,14 +307,14 @@ class ImageProcessing:
                     ReturnError: If the negative_type is not valid type.
                 """
         # Invert colored image
-        if negative_type is self.type_color:
-            offset = ccC.calcOffset(offset_img)
-            inverted_image = ccC.invert_with_offset(img=negative_img, offset=offset, showImage=self.showImage)
+        if negative_type is self.ns.name_negative_color:
+            offset = ccC.calcOffset(offset_img, verbose=False)
+            inverted_image = ccC.invert_with_offset(img=negative_img, offset=offset, showImage=visualizeSteps)
 
         # Invert black and white image
-        elif negative_type is self.type_bw:
-            offset = ccBW.calcOffset(offset_img)
-            inverted_image = ccBW.invert_with_offset(img=negative_img, offset=offset, showImage=self.showImage)
+        elif negative_type is self.ns.name_negative_bw:
+            offset = ccBW.calcOffset(offset_img, verbose=False)
+            inverted_image = ccBW.invert_with_offset(img=negative_img, offset=offset, showImage=visualizeSteps)
 
         else:
             print(f'[WARNING] Type {negative_type} of inverting unknown ')
@@ -237,7 +344,7 @@ class ImageProcessing:
         except Exception as e:
             raise IOError(f"Error saving the image to '{filename}': {str(e)}")
 
-    #------------------------------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------------------------------
     def showImg(self, window_name, img):
         cv2.imshow(window_name, img)
         cv2.waitKey(0)

@@ -14,36 +14,28 @@ Für spezifische Bildmanipulationen kann die Wahl zwischen RGB und HSV von der N
 '''
 
 
-def calcOffset(snipped):
-    # Konvertiere das Bild in den HSV-Farbraum
+def calcOffset(snipped, verbose=False):
+    # Convert to HSV Colorspace
     img_hsv = cv2.cvtColor(snipped, cv2.COLOR_BGR2HSV)
-
-    # Berechne den Durchschnitt der Helligkeit (Value-Kanal)
+    # Calculate average in hsv channel
     average_value = int(img_hsv[:,:,2].mean())
-    print(f"Durchschnittlicher Helligkeitswert: {average_value}")
-
+    if verbose:
+        print(f"Average pixel value: {average_value}")
     return average_value
 
+
 def invert_with_offset(img, offset, showImage=False):
-    # Konvertiere das Bild in den HSV-Farbraum
-    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    # Invertiere die Farbkanäle
+    inverted_rgb = cv2.bitwise_not(img)
 
-    # Helligkeitskanal (Value) anpassen
-    img_hsv[:,:,2] = cv2.add(img_hsv[:,:,2], offset)
+    # Korrigiere die Helligkeit
+    inverted_rgb = cv2.add(inverted_rgb, offset)
 
-    # Invertierung der Farben im HSV-Farbraum
-    inverted_hsv = cv2.bitwise_not(img_hsv)
-
-    # Konvertiere das invertierte Bild zurück in den BGR-Farbraum
-    inverted_rgb = cv2.cvtColor(inverted_hsv, cv2.COLOR_HSV2BGR)
-
-    # Normalisiere die Werte, um sicherzustellen, dass sie im gültigen Bereich liegen
+    # Checke die Werte auf den Bereich 0-255
     normalized_inverted_rgb = np.clip(inverted_rgb, 0, 255).astype(np.uint8)
-
-    data = normalized_inverted_rgb
-
+    normalized_inverted_rgb=cv2.cvtColor(normalized_inverted_rgb, cv2.COLOR_BGR2RGB)
     if showImage:
-        cv2.imshow('Invertiert mit Offset', data)
+        cv2.imshow('Invertiert mit Offset', normalized_inverted_rgb)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
