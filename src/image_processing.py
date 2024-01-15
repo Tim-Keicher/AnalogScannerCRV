@@ -131,13 +131,10 @@ class ImageProcessing:
 
             else:
                 epsilon = 0.02 * cv2.arcLength(cont, True)
-                n_corners = len(cv2.approxPolyDP(cont, epsilon, True))
-
+                corners_approx = cv2.approxPolyDP(cont, epsilon, True)
+                n_corners = len(corners_approx)
                 if n_corners == 4:
-                    #corners = [tuple(point[0]) for point in corners]
-                    rect = cv2.minAreaRect(cont)
-                    corners = np.int0(cv2.boxPoints(rect))
-                    cv2.drawContours(output, [corners], 0, (0, 255, 0), 2)
+                    corners = [tuple(point[0]) for point in corners_approx]
 
             for point in corners:
                 x, y = point

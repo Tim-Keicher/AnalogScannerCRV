@@ -17,6 +17,6 @@ class Names:
         self.alignment_vertical = "vertical"
 
         self.min_size_dia = 100
-        self.min_size_film = 400
+        self.min_size_film = 800
 
         self.debugging_mode = False
