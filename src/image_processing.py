@@ -104,23 +104,41 @@ class ImageProcessing:
         mask = cv2.bitwise_not(mask)
         mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
 
+        contours = sorted(contours, key=cv2.contourArea, reverse=True)
+
         filtered_contours = []
         for cont in contours:
-            if cont.size >= 400:
-                cv2.drawContours(output, [contours[0]], -1, (0, 255, 0), 20)
+            if boundaryType == self.ns.name_dia:
+                min_size = self.ns.min_size_dia
+            else:
+                min_size = self.ns.min_size_dia
+
+            if cont.size >= min_size:
                 cv2.drawContours(mask, [cont], -1, (0, 0, 0), thickness=cv2.FILLED)
                 filtered_contours.append(cont)
+            else:
+                # Speed up the process so we dont loop over
+                break
         print(f'[DEBUG] {len(filtered_contours)} Filtered Contours found')
 
         for cont in filtered_contours:
-            epsilon = 0.02 * cv2.arcLength(cont, True)
-            corners = cv2.approxPolyDP(cont, epsilon, True)
+            # Check for Dias
+            if boundaryType == self.ns.name_dia:
+                rect = cv2.minAreaRect(cont)
+                corners = np.int0(cv2.boxPoints(rect))
+                cv2.drawContours(output, [corners], 0, (0, 255, 0), 2)
+                for point in corners:
+                    x, y = point
+                    cv2.circle(output, (x, y), 5, (0, 0, 255), -1)
+
+            else:
+                epsilon = 0.02 * cv2.arcLength(cont, True)
+                corners = cv2.approxPolyDP(cont, epsilon, True)
+                corners = [tuple(point[0]) for point in corners]
 
             for point in corners:
-                x, y = point[0]
+                x, y = point
                 cv2.circle(output, (x, y), 5, (0, 0, 255), -1)
-
-            corners = [tuple(point[0]) for point in corners]
 
             sorted_coordinates = sorted(corners, key=lambda coord: coord[0])
             left_coordinates = sorted_coordinates[:2]
@@ -150,19 +168,19 @@ class ImageProcessing:
                                      [max_width - 1, max_height - 1],
                                      [max_width - 1, 0]])
             M = cv2.getPerspectiveTransform(input_pts, output_pts)
-
-            croped_img_array.append(cv2.warpPerspective(img, M, (max_width, max_height), flags=cv2.INTER_LINEAR))
+            warped_perspective = cv2.warpPerspective(img, M, (max_width, max_height), flags=cv2.INTER_LINEAR)
+            croped_img_array.append(warped_perspective)
 
         if visualizeSteps:
             self.showImg('thresh_otsu', thresh_otsu)
             self.showImg('mask', mask)
             self.showImg('output', output)
 
-        final_array = self.resizeStripByType(img_array=croped_img_array, boundaryType=boundaryType)
+        final_array = self.resizeStripByType(img_array=croped_img_array, boundaryType=boundaryType, visualizeSteps=visualizeSteps)
         return final_array
 
     # ------------------------------------------------------------------------------------------------------
-    def resizeStripByType(self, img_array, boundaryType):
+    def resizeStripByType(self, img_array, boundaryType, visualizeSteps=False):
         """Resize the strips to cut off the edge
 
                 Args:
@@ -187,12 +205,88 @@ class ImageProcessing:
                 cuttingWidth = int(cuttingHeight * 90 / 100)
                 cutStrip.append(img[cuttingHeight:h - cuttingHeight, cuttingWidth:w - cuttingWidth])
             elif boundaryType == self.ns.name_dia:
-                cuttingHeight = int(h*15/100)
-                cuttingWidth = int(w*22/100)
-                cutStrip.append(img[cuttingHeight:h - cuttingHeight, cuttingWidth:w - cuttingWidth])
+                cuttingHeight = int(h*5/100)
+                cuttingWidth = int(w*5/100)
+                precut_img = img[cuttingHeight:h - cuttingHeight, cuttingWidth:w - cuttingWidth]
+                gray_img = cv2.cvtColor(precut_img, cv2.COLOR_BGR2GRAY)
+                blur = cv2.GaussianBlur(gray_img, (7, 7), 1)
+                _, thresh_otsu = cv2.threshold(blur, 0, 255, cv2.THRESH_OTSU)
+
+                h, w = precut_img.shape[:2]
+                horizontal_mask, vertical_mask, horizontal_corners, vertical_corners = self.generate_dia_masks(w=w, h=h)
+                alignment = self.get_dia_alignment(threshold_img=thresh_otsu, horizontal_mask=horizontal_mask, vertical_mask=vertical_mask)
+
+                if alignment == self.ns.alignment_vertical:
+                    dia = precut_img[vertical_corners[0][1]:vertical_corners[2][1], vertical_corners[0][0]:vertical_corners[2][0]]
+                    # Rotate 90 degree
+                    dia = cv2.rotate(dia, cv2.ROTATE_90_CLOCKWISE)
+                else:
+                    dia = precut_img[horizontal_corners[0][1]:horizontal_corners[2][1],
+                          horizontal_corners[0][0]:horizontal_corners[2][0]]
+
+                if visualizeSteps:
+                    pass
+                cutStrip.append(dia)
             else:
                 print(f'[WARNING] Unknown BoundaryType: {boundaryType}')
         return cutStrip
+
+    def generate_dia_masks(self, w, h):
+        # Initialize horizontal and vertical masks
+        horizontal_mask = np.zeros((h, w), dtype=np.uint8)
+        vertical_mask = np.zeros((h, w), dtype=np.uint8)
+
+        # Define dimensions for horizontal and vertical masks
+        horizontal_mask_width = int(w * 80 / 100)
+        horizontal_mask_height = int(w * 50 / 100)
+        vertical_mask_width = int(w * 50 / 100)
+        vertical_mask_height = int(w * 80 / 100)
+
+        # Calculate starting coordinates for both masks
+        horizontal_mask_x = (w - horizontal_mask_width) // 2
+        horizontal_mask_y = (h - horizontal_mask_height) // 2
+        vertical_mask_x = (w - vertical_mask_width) // 2
+        vertical_mask_y = (h - vertical_mask_height) // 2
+
+        # Draw rectangles on the masks
+        cv2.rectangle(horizontal_mask, (horizontal_mask_x, horizontal_mask_y),
+                      (horizontal_mask_x + horizontal_mask_width, horizontal_mask_y + horizontal_mask_height), 255, -1)
+        cv2.rectangle(vertical_mask, (vertical_mask_x, vertical_mask_y),
+                      (vertical_mask_x + vertical_mask_width, vertical_mask_y + vertical_mask_height), 255, -1)
+
+        # Define corner points for both masks
+        horizontal_corners = [(horizontal_mask_x, horizontal_mask_y),
+                              (horizontal_mask_x + horizontal_mask_width, horizontal_mask_y),
+                              (horizontal_mask_x + horizontal_mask_width, horizontal_mask_y + horizontal_mask_height),
+                              (horizontal_mask_x, horizontal_mask_y + horizontal_mask_height)]
+
+        vertical_corners = [(vertical_mask_x, vertical_mask_y),
+                            (vertical_mask_x + vertical_mask_width, vertical_mask_y),
+                            (vertical_mask_x + vertical_mask_width, vertical_mask_y + vertical_mask_height),
+                            (vertical_mask_x, vertical_mask_y + vertical_mask_height)]
+
+        # Return masks and corner points
+        return horizontal_mask, vertical_mask, horizontal_corners, vertical_corners
+
+    def get_dia_alignment(self, threshold_img, vertical_mask, horizontal_mask, visualizeSteps=False):
+
+        hor_masked_image = cv2.bitwise_and(threshold_img, threshold_img, mask=horizontal_mask)
+        hor_matching_pixels = np.count_nonzero(hor_masked_image)
+
+        vert_masked_image = cv2.bitwise_and(threshold_img, threshold_img, mask=vertical_mask)
+        vert_matching_pixels = np.count_nonzero(vert_masked_image)
+
+        if hor_matching_pixels > vert_matching_pixels:
+            alignment = self.ns.alignment_horizontal
+        else:
+            alignment = self.ns.alignment_vertical
+
+        if visualizeSteps:
+            self.showImg('vert_masked_image', vert_masked_image)
+            self.showImg('hor_masked_image', hor_masked_image)
+            print(f'[INFO] The Dia got detected as {alignment}.')
+
+        return alignment
 
     # ------------------------------------------------------------------------------------------------------
     def cutSingleImgs(self, img, boundaryType, visualizeSteps=False):

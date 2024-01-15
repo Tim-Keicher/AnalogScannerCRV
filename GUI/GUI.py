@@ -268,7 +268,7 @@ class App(ctk.CTk):
         """
         boundaryType = self.sidebar_img_format.get()
         negativeType = self.sidebar_img_negativeType.get()
-        self.finished_imgs
+        self.finished_imgs = []
 
         if self.sidebar_camera_image.get() == self.ns.name_mode_camera:
             self.dataset = []
@@ -306,7 +306,7 @@ class App(ctk.CTk):
                     if self.sidebar_camera_image.get() == self.ns.name_mode_camera:
                         dia = Image.fromarray(dia)
                     else:
-                        dia = Image.fromarray(cv2.rotate(cv2.cvtColor(dia, cv2.COLOR_BGR2RGB), cv2.ROTATE_90_CLOCKWISE))
+                        dia = Image.fromarray(cv2.cvtColor(dia, cv2.COLOR_BGR2RGB))
                     if i < 6:
                         display_img.append(dia)
                     self.finished_imgs.append(dia)
