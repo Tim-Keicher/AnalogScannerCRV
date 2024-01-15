@@ -46,11 +46,10 @@ class App(ctk.CTk):
     def __init__(self, *args, **kwargs):
         # Set variables
         self.load_location_path: str = None
-        self.save_location_path: str = None
         self.current_camera_port: str = None
 
         self.dataset = []
-
+        self.finished_imgs = []
         self.ns = names.Names()
 
         # Initialize Tkinter
@@ -233,8 +232,34 @@ class App(ctk.CTk):
         Handles events when the "Save" button is clicked.
         Opens a file dialog for selecting the location to save processed images.
         """
-        self.save_location_path = filedialog.asksaveasfilename(initialdir='Images', title='Save as:', defaultextension='.png', filetypes=[("JPEG", "*.jpg"), ("PNG", "*.png"), ("GIF", "*.gif"), ("All Files", "*.*")])
-        print(self.save_location_path)
+        save_img_path_and_name = filedialog.asksaveasfile().name
+        save_location_path = os.path.dirname(save_img_path_and_name)
+        image_counter = self.calculate_image_counter(saving_path=save_location_path)
+
+        for i, img in enumerate(self.finished_imgs):
+            file_path_and_name = str(save_img_path_and_name) + str(i + 1 + image_counter)
+            self.processing.saveImg(img=img, file_path_and_name=file_path_and_name)
+
+
+        os.remove(save_img_path_and_name)
+        self.finished_imgs = []
+
+    def calculate_image_counter(self, saving_path):
+        # Check if the specified path exists and is a directory
+        if not os.path.exists(saving_path) or not os.path.isdir(saving_path):
+            return 0
+
+        # Count the number of image files in the path
+        image_counter = 0
+        valid_image_extensions = ['.png', '.jpg', '.jpeg', '.gif', '.bmp']
+
+        for filename in os.listdir(saving_path):
+            file_path = os.path.join(saving_path, filename)
+            if os.path.isfile(file_path) and any(filename.lower().endswith(ext) for ext in valid_image_extensions):
+                image_counter += 1
+
+        print(f'[INFO] {image_counter} images already in {saving_path}')
+        return image_counter
 
     def sidebar_btn_process_event(self):
         """
@@ -243,7 +268,7 @@ class App(ctk.CTk):
         """
         boundaryType = self.sidebar_img_format.get()
         negativeType = self.sidebar_img_negativeType.get()
-        finished_imgs =[]
+        self.finished_imgs
 
         if self.sidebar_camera_image.get() == self.ns.name_mode_camera:
             self.dataset = []
@@ -270,10 +295,10 @@ class App(ctk.CTk):
                             invertedImage = self.processing.invertImg(negative_img=img, offset_img=strip,
                                                            negative_type=negativeType, visualizeSteps=self.ns.debugging_mode)
                             display_img.append(Image.fromarray(invertedImage))
-                            finished_imgs.append(Image.fromarray(invertedImage))
-
-                self.image_frame.grid(row=0, column=1, rowspan=3, columnspan=2, padx=10, pady=10)
-                self.image_frame.update_images(display_img)
+                            self.finished_imgs.append(Image.fromarray(invertedImage))
+                    if len(display_img)>0:
+                        self.image_frame.grid(row=0, column=1, rowspan=3, columnspan=2, padx=10, pady=10)
+                        self.image_frame.update_images(display_img)
 
             else:
                 display_img = []
@@ -284,7 +309,7 @@ class App(ctk.CTk):
                         dia = Image.fromarray(cv2.rotate(cv2.cvtColor(dia, cv2.COLOR_BGR2RGB), cv2.ROTATE_90_CLOCKWISE))
                     if i < 6:
                         display_img.append(dia)
-                    finished_imgs.append(dia)
+                    self.finished_imgs.append(dia)
 
                 print(f'[INFO] {len(display_img)} images get displayed')
                 self.image_frame.grid(row=0, column=1, rowspan=3, columnspan=2, padx=10, pady=10)

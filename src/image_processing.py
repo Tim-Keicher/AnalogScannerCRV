@@ -286,8 +286,8 @@ class ImageProcessing:
         stacked = np.concatenate((thresh_otsu, blacked), axis=0)
 
         if visualizeSteps:
-            self.showImg("output", output)
             self.showImg("stacked", stacked)
+            self.showImg("output", output)
 
         return cropped_imgs, strip
 
@@ -324,7 +324,7 @@ class ImageProcessing:
         return inverted_image
 
     # ------------------------------------------------------------------------------------------------------
-    def saveImg(self, img, filename_tag=""):
+    def saveImg(self, img, file_path_and_name):
         """Save an image with a filename containing the current date and time.
 
         Args:
@@ -338,9 +338,10 @@ class ImageProcessing:
             IOError: If the image cannot be successfully saved.
         """
         current_date = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        filename = self.PATH_PROCESSED_IMG + f"{current_date}_IMG" + filename_tag + ".jpg"
+        filename = file_path_and_name + "-" + current_date + ".jpg"
 
         try:
+            img = np.array(img)
             cv2.imwrite(filename, img)
         except Exception as e:
             raise IOError(f"Error saving the image to '{filename}': {str(e)}")
