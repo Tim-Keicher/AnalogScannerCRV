@@ -237,6 +237,8 @@ class App(ctk.CTk):
         image_counter = self.calculate_image_counter(saving_path=save_location_path)
 
         for i, img in enumerate(self.finished_imgs):
+            if self.sidebar_img_format.get() == self.ns.name_dia:
+                img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
             file_path_and_name = str(save_img_path_and_name) + str(i + 1 + image_counter)
             self.processing.saveImg(img=img, file_path_and_name=file_path_and_name)
 
