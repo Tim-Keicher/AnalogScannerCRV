@@ -226,6 +226,9 @@ class App(ctk.CTk):
             option (str): The selected image format.
         """
         print(option)
+        if self.sidebar_img_format.get() == self.ns.name_dia:
+            self.sidebar_img_negativeType.set(self.ns.name_positive)
+
 
     def sidebar_btn_save_event(self):
         """
@@ -275,8 +278,6 @@ class App(ctk.CTk):
         if self.sidebar_camera_image.get() == self.ns.name_mode_camera:
             self.dataset = []
             self.dataset.append(self.getCamImage())
-            for im in self.dataset:
-                self.processing.showImg('img', im)
 
         for img in self.dataset:
             ### Cut Images ###
@@ -299,6 +300,7 @@ class App(ctk.CTk):
                             display_img.append(Image.fromarray(invertedImage))
                             self.finished_imgs.append(Image.fromarray(invertedImage))
                     if len(display_img)>0:
+                        self.camera_label.grid_forget()
                         self.image_frame.grid(row=0, column=1, rowspan=3, columnspan=2, padx=10, pady=10)
                         self.image_frame.update_images(display_img)
 
@@ -314,6 +316,7 @@ class App(ctk.CTk):
                     self.finished_imgs.append(dia)
 
                 print(f'[INFO] {len(display_img)} images get displayed')
+                self.camera_label.grid_forget()
                 self.image_frame.grid(row=0, column=1, rowspan=3, columnspan=2, padx=10, pady=10)
                 self.image_frame.update_images(display_img)
 
@@ -352,7 +355,6 @@ class App(ctk.CTk):
 
         # Start the webcam
         self.video_capture = cv2.VideoCapture(port)
-        print(f'video_capture {self.video_capture}')
 
         # Set camera_label grid
         self.camera_label.grid(row=0, column=1, rowspan=7, padx=20, pady=20)

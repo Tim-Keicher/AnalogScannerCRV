@@ -95,7 +95,8 @@ class ImageProcessing:
         blur = cv2.GaussianBlur(gray_img, (7, 7), 1)
 
         # Apply threshold based on Otsu
-        _, thresh_otsu = cv2.threshold(blur, 0, 255, cv2.THRESH_OTSU)
+        tr, _ = cv2.threshold(blur, 0, 255, cv2.THRESH_OTSU)
+        _, thresh_otsu = cv2.threshold(blur, tr + 15, 255, cv2.THRESH_BINARY)
         contours, _ = cv2.findContours(cv2.bitwise_not(thresh_otsu), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         print(f'[DEBUG] {len(contours)} contours found')
 
@@ -111,7 +112,7 @@ class ImageProcessing:
             if boundaryType == self.ns.name_dia:
                 min_size = self.ns.min_size_dia
             else:
-                min_size = self.ns.min_size_dia
+                min_size = self.ns.min_size_film
 
             if cont.size >= min_size:
                 cv2.drawContours(mask, [cont], -1, (0, 0, 0), thickness=cv2.FILLED)
@@ -127,14 +128,16 @@ class ImageProcessing:
                 rect = cv2.minAreaRect(cont)
                 corners = np.int0(cv2.boxPoints(rect))
                 cv2.drawContours(output, [corners], 0, (0, 255, 0), 2)
-                for point in corners:
-                    x, y = point
-                    cv2.circle(output, (x, y), 5, (0, 0, 255), -1)
 
             else:
                 epsilon = 0.02 * cv2.arcLength(cont, True)
-                corners = cv2.approxPolyDP(cont, epsilon, True)
-                corners = [tuple(point[0]) for point in corners]
+                n_corners = len(cv2.approxPolyDP(cont, epsilon, True))
+
+                if n_corners == 4:
+                    #corners = [tuple(point[0]) for point in corners]
+                    rect = cv2.minAreaRect(cont)
+                    corners = np.int0(cv2.boxPoints(rect))
+                    cv2.drawContours(output, [corners], 0, (0, 255, 0), 2)
 
             for point in corners:
                 x, y = point
