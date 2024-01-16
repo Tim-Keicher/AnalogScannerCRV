@@ -6,6 +6,7 @@ import cv2
 import re
 from PIL import Image
 from tkinter import filedialog
+import numpy as np
 
 from frame_show_images import ImageFrame
 import src.image_processing as imPr
@@ -229,7 +230,6 @@ class App(ctk.CTk):
         if self.sidebar_img_format.get() == self.ns.name_dia:
             self.sidebar_img_negativeType.set(self.ns.name_positive)
 
-
     def sidebar_btn_save_event(self):
         """
         Handles events when the "Save" button is clicked.
@@ -240,11 +240,11 @@ class App(ctk.CTk):
         image_counter = self.calculate_image_counter(saving_path=save_location_path)
 
         for i, img in enumerate(self.finished_imgs):
+            img = np.array(img)
             if self.sidebar_img_format.get() == self.ns.name_dia:
                 img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
             file_path_and_name = str(save_img_path_and_name) + str(i + 1 + image_counter)
             self.processing.saveImg(img=img, file_path_and_name=file_path_and_name)
-
 
         os.remove(save_img_path_and_name)
         self.finished_imgs = []

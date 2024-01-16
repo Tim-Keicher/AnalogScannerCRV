@@ -138,7 +138,7 @@ class ImageProcessing:
 
             for point in corners:
                 x, y = point
-                cv2.circle(output, (x, y), 5, (0, 0, 255), -1)
+                cv2.circle(output, (x, y), 15, (0, 0, 255), -1)
 
             sorted_coordinates = sorted(corners, key=lambda coord: coord[0])
             left_coordinates = sorted_coordinates[:2]
@@ -176,7 +176,9 @@ class ImageProcessing:
             self.showImg('mask', mask)
             self.showImg('output', output)
 
-        final_array = self.resizeStripByType(img_array=croped_img_array, boundaryType=boundaryType, visualizeSteps=visualizeSteps)
+        final_array = self.resizeStripByType(img_array=croped_img_array, boundaryType=boundaryType,
+                                             visualizeSteps=visualizeSteps)
+
         return final_array
 
     def resizeStripByType(self, img_array, boundaryType, visualizeSteps=False):
@@ -212,8 +214,8 @@ class ImageProcessing:
                 _, thresh_otsu = cv2.threshold(blur, 0, 255, cv2.THRESH_OTSU)
 
                 h, w = precut_img.shape[:2]
-                horizontal_mask, vertical_mask, horizontal_corners, vertical_corners = self.generate_dia_masks(w=w, h=h)
-                alignment = self.get_dia_alignment(threshold_img=thresh_otsu, horizontal_mask=horizontal_mask, vertical_mask=vertical_mask)
+                horizontal_mask, vertical_mask, horizontal_corners, vertical_corners = self.generate_dia_masks(w=w, h=h, visualizeSteps=visualizeSteps)
+                alignment = self.get_dia_alignment(threshold_img=thresh_otsu, horizontal_mask=horizontal_mask, vertical_mask=vertical_mask, visualizeSteps=visualizeSteps)
 
                 if alignment == self.ns.alignment_vertical:
                     dia = precut_img[vertical_corners[0][1]:vertical_corners[2][1], vertical_corners[0][0]:vertical_corners[2][0]]
@@ -222,15 +224,12 @@ class ImageProcessing:
                 else:
                     dia = precut_img[horizontal_corners[0][1]:horizontal_corners[2][1],
                           horizontal_corners[0][0]:horizontal_corners[2][0]]
-
-                if visualizeSteps:
-                    pass
                 cutStrip.append(dia)
             else:
                 print(f'[WARNING] Unknown BoundaryType: {boundaryType}')
         return cutStrip
 
-    def generate_dia_masks(self, w, h):
+    def generate_dia_masks(self, w, h, visualizeSteps=False):
         # Initialize horizontal and vertical masks
         horizontal_mask = np.zeros((h, w), dtype=np.uint8)
         vertical_mask = np.zeros((h, w), dtype=np.uint8)
@@ -263,7 +262,9 @@ class ImageProcessing:
                             (vertical_mask_x + vertical_mask_width, vertical_mask_y),
                             (vertical_mask_x + vertical_mask_width, vertical_mask_y + vertical_mask_height),
                             (vertical_mask_x, vertical_mask_y + vertical_mask_height)]
-
+        if visualizeSteps:
+            self.showImg("horizontal mask", horizontal_mask)
+            self.showImg("vertical mask", vertical_mask)
         # Return masks and corner points
         return horizontal_mask, vertical_mask, horizontal_corners, vertical_corners
 
@@ -353,9 +354,6 @@ class ImageProcessing:
                 cv2.line(output, (coord, 0), (coord, output.shape[0]), (0, 255, 0), 3)
 
         img_masks = []
-        for coordinate in filtered_coords:
-            img_masks. append(self.generate_img_masks(img_height=int(h), img_length=int(singleImageWidth), strip_length=int(w), pos=coordinate, visualizeSteps=visualizeSteps))
-        final_positions = self.val_img_positions(single_img_masks=img_masks, strip_mask=blacked, pos=filtered_coords, img_length=singleImageWidth ,visualizeSteps=visualizeSteps)
 
         cropped_imgs = []
         strip = None
@@ -382,12 +380,22 @@ class ImageProcessing:
                 if w - filtered_coords[i + 1] <= singleImageWidth * 85 / 100:
                     break
 
-        # Generate Stacked Image
-        stacked = np.concatenate((thresh_otsu, blacked), axis=0)
-
         if visualizeSteps:
-            self.showImg("stacked", stacked)
-            self.showImg("output", output)
+            self.showImg("Detect Single Images", img, destroy_window=False)
+            stacked = np.concatenate((img, cv2.cvtColor(thresh_otsu, cv2.COLOR_GRAY2BGR)), axis=0)
+            self.showImg("Detect Single Images", stacked, destroy_window=False)
+            stacked = np.concatenate((stacked, cv2.cvtColor(blacked, cv2.COLOR_GRAY2BGR)), axis=0)
+            self.showImg("Detect Single Images", stacked, destroy_window=False)
+            stacked = np.concatenate((stacked, output), axis=0)
+            self.showImg("Detect Single Images", stacked, destroy_window=False)
+
+            for coordinate in filtered_coords:
+                img_masks.append(
+                    self.generate_img_masks(img_height=int(h), img_length=int(singleImageWidth), strip_length=int(w),
+                                            pos=coordinate, visualizeSteps=visualizeSteps))
+            _ = self.val_img_positions(single_img_masks=img_masks, strip_mask=blacked, pos=filtered_coords,
+                                       img_length=singleImageWidth, visualizeSteps=visualizeSteps)
+            cv2.destroyAllWindows()
 
         return cropped_imgs, strip
 
