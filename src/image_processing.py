@@ -179,7 +179,6 @@ class ImageProcessing:
         final_array = self.resizeStripByType(img_array=croped_img_array, boundaryType=boundaryType, visualizeSteps=visualizeSteps)
         return final_array
 
-    # ------------------------------------------------------------------------------------------------------
     def resizeStripByType(self, img_array, boundaryType, visualizeSteps=False):
         """Resize the strips to cut off the edge
 
@@ -335,9 +334,10 @@ class ImageProcessing:
         blur = cv2.GaussianBlur(gray, (7, 7), 1)
         _, thresh_otsu = cv2.threshold(blur, 0, 255, cv2.THRESH_OTSU)
         blacked = thresh_otsu.copy()
-        checkforBlack = np.any(thresh_otsu == 0, axis=0)
+        check_black = np.any(thresh_otsu == 0, axis=0)
 
-        blacked[:, checkforBlack] = 0
+        # Generate the Blacked mask to detect the images.
+        blacked[:, check_black] = 0
 
         coordinates = []
         for x in range(w - 1):
@@ -345,14 +345,19 @@ class ImageProcessing:
             if blacked[0, x] == 0 and blacked[0, x + 1] == 255 or blacked[0, x] == 255 and blacked[0, x + 1] == 0:
                 coordinates.append(x)
 
+        # Filter lines generate them on output
         filtered_coords = []
         for coord in coordinates:
             if coord <= 10 or coord >= singleImageWidth * 90 / 100:
                 filtered_coords.append(coord)
                 cv2.line(output, (coord, 0), (coord, output.shape[0]), (0, 255, 0), 3)
 
-        cropped_imgs = []
+        img_masks = []
+        for coordinate in filtered_coords:
+            img_masks. append(self.generate_img_masks(img_height=int(h), img_length=int(singleImageWidth), strip_length=int(w), pos=coordinate, visualizeSteps=visualizeSteps))
+        final_positions = self.val_img_positions(single_img_masks=img_masks, strip_mask=blacked, pos=filtered_coords, img_length=singleImageWidth ,visualizeSteps=visualizeSteps)
 
+        cropped_imgs = []
         strip = None
         firstImg = False
 
@@ -363,20 +368,20 @@ class ImageProcessing:
                 if filtered_coords[i] >= singleImageWidth * 85 / 100 and firstImg is False:
                     cropped_imgs.append(img[:, 0:filtered_coords[i]])
                     firstImg = True
-                elif i == len(filtered_coords) - 2 and w-filtered_coords[i + 1] >= singleImageWidth * 85 / 100:
+                elif i == len(filtered_coords) - 2 and w -filtered_coords[i + 1] >= singleImageWidth * 85 / 100:
                     cropped_imgs.append(img[:, filtered_coords[i + 1]:w])
 
                 ofs = filtered_coords[i + 1] - filtered_coords[i]
 
                 if ofs > singleImageWidth * 85 / 100:
-                    cropped_imgs.append(img[:, filtered_coords[i]:filtered_coords[i+1]])
+                    cropped_imgs.append(img[:, filtered_coords[i]:filtered_coords[i + 1]])
                 else:
                     if strip is None:
-                        strip = img[:, filtered_coords[i]:filtered_coords[i+1]]
+                        strip = img[:, filtered_coords[i]:filtered_coords[i + 1]]
 
-                if w-filtered_coords[i + 1] <= singleImageWidth * 85 / 100:
                     break
 
+        # Generate Stacked Image
         stacked = np.concatenate((thresh_otsu, blacked), axis=0)
 
         if visualizeSteps:
@@ -384,6 +389,46 @@ class ImageProcessing:
             self.showImg("output", output)
 
         return cropped_imgs, strip
+
+    def generate_img_masks(self, img_height, img_length, strip_length, pos, visualizeSteps=False):
+        img_mask = np.zeros((img_height, strip_length), dtype=np.uint8)
+
+        # Define dimensions for horizontal and vertical masks
+        img_mask_width = img_length
+        img_mask_height = img_height
+
+        img_mask_x = pos - img_length
+        img_mask_y = 0
+
+        if pos + img_length < strip_length:
+            # Draw rectangles on the masks
+            cv2.rectangle(img_mask, (img_mask_x, img_mask_y),
+                          (img_mask_x + img_mask_width, img_mask_y + img_mask_height), 255, -1)
+
+        img_mask = cv2.bitwise_not(img_mask)
+        if visualizeSteps:
+            #self.showImg('image_mask', img_mask, destroy_window=False)
+            pass
+
+        return img_mask
+
+    def val_img_positions(self, single_img_masks, strip_mask, pos, img_length, visualizeSteps=False):
+        mask_positions = []
+        for single_mask in single_img_masks:
+            result = cv2.bitwise_or(strip_mask, single_mask)
+            result_xor = cv2.bitwise_not(cv2.bitwise_xor(result, single_mask))
+            mask_positions.append(np.count_nonzero(result_xor))
+
+            # Generate output
+            if visualizeSteps:
+                stacked = np.concatenate((strip_mask, single_mask, result, result_xor), axis=0)
+                self.showImg('stacked', stacked, destroy_window=False)
+
+        # img witch should be good
+        golden_img_idx = np.argmax(mask_positions)
+        val = pos[golden_img_idx]
+        print(val)
+        return val
 
     # ------------------------------------------------------------------------------------------------------
     def invertImg(self, negative_img, offset_img, negative_type, visualizeSteps=False):
@@ -441,7 +486,8 @@ class ImageProcessing:
             raise IOError(f"Error saving the image to '{filename}': {str(e)}")
 
     # ------------------------------------------------------------------------------------------------------
-    def showImg(self, window_name, img):
+    def showImg(self, window_name, img, destroy_window=True):
         cv2.imshow(window_name, img)
         cv2.waitKey(0)
-        cv2.destroyWindow(window_name)
+        if destroy_window:
+            cv2.destroyAllWindows()
