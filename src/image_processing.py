@@ -379,6 +379,7 @@ class ImageProcessing:
                     if strip is None:
                         strip = img[:, filtered_coords[i]:filtered_coords[i + 1]]
 
+                if w - filtered_coords[i + 1] <= singleImageWidth * 85 / 100:
                     break
 
         # Generate Stacked Image
