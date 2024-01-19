@@ -13,4 +13,10 @@ class Names:
         self.name_mode_image = "Image"
         self.name_mode_camera = "Camera"
 
+        self.alignment_horizontal = "horizontal"
+        self.alignment_vertical = "vertical"
+
+        self.min_size_dia = 100
+        self.min_size_film = 800
+
         self.debugging_mode = False

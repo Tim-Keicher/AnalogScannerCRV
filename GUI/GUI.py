@@ -6,6 +6,7 @@ import cv2
 import re
 from PIL import Image
 from tkinter import filedialog
+import numpy as np
 
 from frame_show_images import ImageFrame
 import src.image_processing as imPr
@@ -46,11 +47,10 @@ class App(ctk.CTk):
     def __init__(self, *args, **kwargs):
         # Set variables
         self.load_location_path: str = None
-        self.save_location_path: str = None
         self.current_camera_port: str = None
 
         self.dataset = []
-
+        self.finished_imgs = []
         self.ns = names.Names()
 
         # Initialize Tkinter
@@ -227,14 +227,44 @@ class App(ctk.CTk):
             option (str): The selected image format.
         """
         print(option)
+        if self.sidebar_img_format.get() == self.ns.name_dia:
+            self.sidebar_img_negativeType.set(self.ns.name_positive)
 
     def sidebar_btn_save_event(self):
         """
         Handles events when the "Save" button is clicked.
         Opens a file dialog for selecting the location to save processed images.
         """
-        self.save_location_path = filedialog.asksaveasfilename(initialdir='Images', title='Save as:', defaultextension='.png', filetypes=[("JPEG", "*.jpg"), ("PNG", "*.png"), ("GIF", "*.gif"), ("All Files", "*.*")])
-        print(self.save_location_path)
+        save_img_path_and_name = filedialog.asksaveasfile().name
+        save_location_path = os.path.dirname(save_img_path_and_name)
+        image_counter = self.calculate_image_counter(saving_path=save_location_path)
+
+        for i, img in enumerate(self.finished_imgs):
+            img = np.array(img)
+            if self.sidebar_img_format.get() == self.ns.name_dia:
+                img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+            file_path_and_name = str(save_img_path_and_name) + str(i + 1 + image_counter)
+            self.processing.saveImg(img=img, file_path_and_name=file_path_and_name)
+
+        os.remove(save_img_path_and_name)
+        self.finished_imgs = []
+
+    def calculate_image_counter(self, saving_path):
+        # Check if the specified path exists and is a directory
+        if not os.path.exists(saving_path) or not os.path.isdir(saving_path):
+            return 0
+
+        # Count the number of image files in the path
+        image_counter = 0
+        valid_image_extensions = ['.png', '.jpg', '.jpeg', '.gif', '.bmp']
+
+        for filename in os.listdir(saving_path):
+            file_path = os.path.join(saving_path, filename)
+            if os.path.isfile(file_path) and any(filename.lower().endswith(ext) for ext in valid_image_extensions):
+                image_counter += 1
+
+        print(f'[INFO] {image_counter} images already in {saving_path}')
+        return image_counter
 
     def sidebar_btn_process_event(self):
         """
@@ -242,80 +272,53 @@ class App(ctk.CTk):
         Initiates the image processing or camera capturing based on the selected mode.
         """
         boundaryType = self.sidebar_img_format.get()
-        print(f'boundary{boundaryType}')
         negativeType = self.sidebar_img_negativeType.get()
-        finished_imgs = []
-        print(self.sidebar_camera_image.get())
+        self.finished_imgs = []
 
-        if self.sidebar_camera_image.get() == self.ns.name_mode_image:
-            for img in self.dataset:
-                ### Cut Images ###
-                strips = self.processing.cutStrip(img, boundaryType=boundaryType, visualizeSteps=self.ns.debugging_mode)
-                if boundaryType != self.ns.name_dia:
-                    for strip in strips:
-                        # self.processing.showImg(window_name='strip', img=strip)
-                        height, width = img.shape[:2]
-                        if height > width:
-                            strip = cv2.rotate(src=strip, rotateCode=cv2.ROTATE_90_CLOCKWISE)
+        if self.sidebar_camera_image.get() == self.ns.name_mode_camera:
+            self.dataset = []
+            self.dataset.append(self.getCamImage())
 
-                        single_images, strip = self.processing.cutSingleImgs(strip, visualizeSteps=self.ns.debugging_mode, boundaryType=boundaryType)
-                        print(f'[INFO] Found {len(single_images)} single images')
-                        display_img = []
-                        for img in single_images:
-                            ### Invert images ###
-                            if strip is not None:
-                                invertedImage = self.processing.invertImg(negative_img=img, offset_img=strip,
-                                                               negative_type=negativeType, visualizeSteps=self.ns.debugging_mode)
-                                display_img.append(Image.fromarray(invertedImage))
-                                finished_imgs.append(Image.fromarray(invertedImage))
-
-                    print(f'[INFO] {len(display_img)} images get displayed')
-                    self.image_frame.grid(row=0, column=1, rowspan=3, columnspan=2, padx=10, pady=10)
-                    self.image_frame.update_images(display_img)
-
-                else:
-                    display_img = []
-                    for i, dia in enumerate(strips):
-                        if i < 6:
-                            display_img.append(Image.fromarray(cv2.rotate(cv2.cvtColor(dia, cv2.COLOR_BGR2RGB), cv2.ROTATE_90_CLOCKWISE)))
-
-                        finished_imgs.append(Image.fromarray(cv2.rotate(cv2.cvtColor(dia, cv2.COLOR_BGR2RGB), cv2.ROTATE_90_CLOCKWISE)))
-
-                    print(f'[INFO] {len(display_img)} images get displayed')
-                    self.image_frame.grid(row=0, column=1, rowspan=3, columnspan=2, padx=10, pady=10)
-                    self.image_frame.update_images(display_img)
-        # Try to use camera
-        else:
-            try:
-                # ToDo: get the actual image of the camera
-                img = self.getCamImage()
-
-                ### Cut Images ###
-                strips = self.processing.cutStrip(img, boundaryType=boundaryType, visualizeSteps=self.ns.debugging_mode)
+        for img in self.dataset:
+            ### Cut Images ###
+            strips = self.processing.cutStrip(img, boundaryType=boundaryType, visualizeSteps=self.ns.debugging_mode)
+            if boundaryType != self.ns.name_dia:
                 for strip in strips:
+                    # self.processing.showImg(window_name='strip', img=strip)
                     height, width = img.shape[:2]
                     if height > width:
                         strip = cv2.rotate(src=strip, rotateCode=cv2.ROTATE_90_CLOCKWISE)
 
-                    single_images, strip = self.processing.cutSingleImgs(strip, visualizeSteps=self.ns.debugging_mode,
-                                                                         boundaryType=boundaryType)
+                    single_images, strip = self.processing.cutSingleImgs(strip, visualizeSteps=self.ns.debugging_mode, boundaryType=boundaryType)
                     print(f'[INFO] Found {len(single_images)} single images')
+                    display_img = []
+                    for img in single_images:
+                        ### Invert images ###
+                        if strip is not None:
+                            invertedImage = self.processing.invertImg(negative_img=img, offset_img=strip,
+                                                           negative_type=negativeType, visualizeSteps=self.ns.debugging_mode)
+                            display_img.append(Image.fromarray(invertedImage))
+                            self.finished_imgs.append(Image.fromarray(invertedImage))
+                    if len(display_img)>0:
+                        self.camera_label.grid_forget()
+                        self.image_frame.grid(row=0, column=1, rowspan=3, columnspan=2, padx=10, pady=10)
+                        self.image_frame.update_images(display_img)
 
-                    if self.sidebar_img_format.get != self.ns.name_dia:
-                        finished_imgs = []
-                        for img in single_images:
-                            ### Invert Images if needed ###
-                            if strip is not None:
-                                invertedImage = self.processing.invertImg(negative_img=img, offset_img=strip,
-                                                                          negative_type=negativeType,
-                                                                          visualizeSteps=self.ns.debugging_mode)
-                                finished_imgs.append(invertedImage)
-                    # Handle DIAS
+            else:
+                display_img = []
+                for i, dia in enumerate(strips):
+                    if self.sidebar_camera_image.get() == self.ns.name_mode_camera:
+                        dia = Image.fromarray(dia)
                     else:
-                        finished_imgs=single_images
-            except:
-                print("[INFO] Not possible to load and process Image from Camera")
-                pass
+                        dia = Image.fromarray(cv2.cvtColor(dia, cv2.COLOR_BGR2RGB))
+                    if i < 6:
+                        display_img.append(dia)
+                    self.finished_imgs.append(dia)
+
+                print(f'[INFO] {len(display_img)} images get displayed')
+                self.camera_label.grid_forget()
+                self.image_frame.grid(row=0, column=1, rowspan=3, columnspan=2, padx=10, pady=10)
+                self.image_frame.update_images(display_img)
 
     def change_appearance_mode_event(self, new_appearance_mode: str):
         """
@@ -352,7 +355,6 @@ class App(ctk.CTk):
 
         # Start the webcam
         self.video_capture = cv2.VideoCapture(port)
-        print(f'video_capture {self.video_capture}')
 
         # Set camera_label grid
         self.camera_label.grid(row=0, column=1, rowspan=7, padx=20, pady=20)
