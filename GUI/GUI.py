@@ -8,7 +8,7 @@ from PIL import Image
 from tkinter import filedialog
 import numpy as np
 
-from frame_show_images import ImageFrame
+from GUI.frame_show_images import ImageFrame
 import src.image_processing as imPr
 
 import src.namespace as names
@@ -63,7 +63,7 @@ class App(ctk.CTk):
         self.title('Analog Scanner')
 
         # Set window icon
-        self.after(201, lambda: self.iconbitmap('imagesGUI\HHN_Logo_D_weiss.ico'))
+        self.after(201, lambda: self.iconbitmap('GUI\imagesGUI\HHN_Logo_D_weiss.ico'))
 
         # Set GUI image paths
         gui_image_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "imagesGUI")
