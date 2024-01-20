@@ -23,6 +23,7 @@ class ImageProcessing:
 
     def __init__(self):
         self.PATH_PROCESSED_IMG = "Saves/"
+        self.DEBUGGING_PATH_IMG = "Saves/Debugging/debug_img"
         self.config_cut_img_sep_lines = True
 
         self.ns = names.Names()
@@ -172,6 +173,10 @@ class ImageProcessing:
             croped_img_array.append(warped_perspective)
 
         if visualizeSteps:
+            self.saveImg(img=thresh_otsu, file_path_and_name=self.DEBUGGING_PATH_IMG, name_tag="thresh_otsu")
+            self.saveImg(img=mask, file_path_and_name=self.DEBUGGING_PATH_IMG, name_tag="mask")
+            self.saveImg(img=output, file_path_and_name=self.DEBUGGING_PATH_IMG, name_tag="output")
+            
             self.showImg('thresh_otsu', thresh_otsu)
             self.showImg('mask', mask)
             self.showImg('output', output)
@@ -263,6 +268,9 @@ class ImageProcessing:
                             (vertical_mask_x + vertical_mask_width, vertical_mask_y + vertical_mask_height),
                             (vertical_mask_x, vertical_mask_y + vertical_mask_height)]
         if visualizeSteps:
+            self.saveImg(img=horizontal_mask, file_path_and_name=self.DEBUGGING_PATH_IMG, name_tag="horizontal_mask")
+            self.saveImg(img=vertical_mask, file_path_and_name=self.DEBUGGING_PATH_IMG, name_tag="vertical_mask")
+            
             self.showImg("horizontal mask", horizontal_mask)
             self.showImg("vertical mask", vertical_mask)
         # Return masks and corner points
@@ -282,6 +290,9 @@ class ImageProcessing:
             alignment = self.ns.alignment_vertical
 
         if visualizeSteps:
+            self.saveImg(img=vert_masked_image, file_path_and_name=self.DEBUGGING_PATH_IMG, name_tag="vert_masked_image")
+            self.saveImg(img=hor_masked_image, file_path_and_name=self.DEBUGGING_PATH_IMG, name_tag="hor_masked_image")
+            
             self.showImg('vert_masked_image', vert_masked_image)
             self.showImg('hor_masked_image', hor_masked_image)
             print(f'[INFO] The Dia got detected as {alignment}.')
@@ -381,12 +392,16 @@ class ImageProcessing:
                     break
 
         if visualizeSteps:
+            self.saveImg(img=img, file_path_and_name=self.DEBUGGING_PATH_IMG, name_tag="Detect Single Images 0")
             self.showImg("Detect Single Images", img, destroy_window=False)
             stacked = np.concatenate((img, cv2.cvtColor(thresh_otsu, cv2.COLOR_GRAY2BGR)), axis=0)
+            self.saveImg(img=stacked, file_path_and_name=self.DEBUGGING_PATH_IMG, name_tag="Detect Single Images 1")
             self.showImg("Detect Single Images", stacked, destroy_window=False)
             stacked = np.concatenate((stacked, cv2.cvtColor(blacked, cv2.COLOR_GRAY2BGR)), axis=0)
+            self.saveImg(img=stacked, file_path_and_name=self.DEBUGGING_PATH_IMG, name_tag="Detect Single Images 2")
             self.showImg("Detect Single Images", stacked, destroy_window=False)
             stacked = np.concatenate((stacked, output), axis=0)
+            self.saveImg(img=stacked, file_path_and_name=self.DEBUGGING_PATH_IMG, name_tag="Detect Single Images 3")
             self.showImg("Detect Single Images", stacked, destroy_window=False)
 
             for coordinate in filtered_coords:
@@ -416,6 +431,8 @@ class ImageProcessing:
 
         img_mask = cv2.bitwise_not(img_mask)
         if visualizeSteps:
+            #self.saveImg(img=img_mask, file_path_and_name=self.DEBUGGING_PATH_IMG, name_tag="img_mask")
+            
             #self.showImg('image_mask', img_mask, destroy_window=False)
             pass
 
@@ -431,6 +448,8 @@ class ImageProcessing:
             # Generate output
             if visualizeSteps:
                 stacked = np.concatenate((strip_mask, single_mask, result, result_xor), axis=0)
+                self.saveImg(img=stacked, file_path_and_name=self.DEBUGGING_PATH_IMG, name_tag="stacked")
+                
                 self.showImg('stacked', stacked, destroy_window=False)
 
         # img witch should be good
@@ -472,7 +491,7 @@ class ImageProcessing:
         return inverted_image
 
     # ------------------------------------------------------------------------------------------------------
-    def saveImg(self, img, file_path_and_name):
+    def saveImg(self, img, file_path_and_name, name_tag:str=""):
         """Save an image with a filename containing the current date and time.
 
         Args:
@@ -486,7 +505,7 @@ class ImageProcessing:
             IOError: If the image cannot be successfully saved.
         """
         current_date = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        filename = file_path_and_name + "-" + current_date + ".jpg"
+        filename = file_path_and_name + "-" + current_date + "-" + name_tag + ".jpg"
 
         try:
             img = np.array(img)
