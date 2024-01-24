@@ -505,7 +505,10 @@ class ImageProcessing:
             IOError: If the image cannot be successfully saved.
         """
         current_date = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        filename = file_path_and_name + "-" + current_date + "-" + name_tag + ".jpg"
+        if name_tag:
+            filename = file_path_and_name + "-" + current_date + "-" + name_tag + ".jpg"
+        else:
+            filename = file_path_and_name + "-" + current_date + ".jpg"
 
         try:
             img = np.array(img)
