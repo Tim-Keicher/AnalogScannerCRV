@@ -235,19 +235,24 @@ class App(ctk.CTk):
         Handles events when the "Save" button is clicked.
         Opens a file dialog for selecting the location to save processed images.
         """
-        save_img_path_and_name = filedialog.asksaveasfile().name
-        save_location_path = os.path.dirname(save_img_path_and_name)
-        image_counter = self.calculate_image_counter(saving_path=save_location_path)
+        try:
+            save_img_path_and_name = filedialog.asksaveasfile(initialdir=self.ns.save_location).name
+            # update save location for next call (start on the last save location during runing)
+            self.ns.save_location = save_img_path_and_name
+            save_location_path = os.path.dirname(save_img_path_and_name)
+            image_counter = self.calculate_image_counter(saving_path=save_location_path)
 
-        for i, img in enumerate(self.finished_imgs):
-            img = np.array(img)
-            if self.sidebar_img_format.get() == self.ns.name_dia:
-                img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-            file_path_and_name = str(save_img_path_and_name) + str(i + 1 + image_counter)
-            self.processing.saveImg(img=img, file_path_and_name=file_path_and_name)
+            for i, img in enumerate(self.finished_imgs):
+                img = np.array(img)
+                if self.sidebar_img_format.get() == self.ns.name_dia:
+                    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+                file_path_and_name = str(save_img_path_and_name) + str(i + 1 + image_counter)
+                self.processing.saveImg(img=img, file_path_and_name=file_path_and_name)
 
-        os.remove(save_img_path_and_name)
-        self.finished_imgs = []
+            os.remove(save_img_path_and_name)
+            self.finished_imgs = []
+        except:
+            print("[Warning] Images are not saved")
 
     def calculate_image_counter(self, saving_path):
         # Check if the specified path exists and is a directory
