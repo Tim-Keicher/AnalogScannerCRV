@@ -19,6 +19,7 @@ class Names:
         self.min_size_dia = 100
         self.min_size_film = 800
 
+        self.load_location = "./Images"
         self.save_location = "./Saves"
 
         self.debugging_mode = False

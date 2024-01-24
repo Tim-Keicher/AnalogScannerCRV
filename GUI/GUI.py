@@ -196,10 +196,14 @@ class App(ctk.CTk):
         # Reset dataset
         self.dataset = []
 
-        self.load_location_path = filedialog.askopenfilename(initialdir='Images', title='Select a image!', multiple=True, defaultextension='.png', filetypes=[("JPEG", "*.jpg"), ("PNG", "*.png"), ("GIF", "*.gif"), ("All Files", "*.*")])
+        self.load_location_path = filedialog.askopenfilename(initialdir=self.ns.load_location, title='Select a image!', multiple=True, defaultextension='.png', filetypes=[("JPEG", "*.jpg"), ("PNG", "*.png"), ("GIF", "*.gif"), ("All Files", "*.*")])
         for img_path in self.load_location_path:
             img = cv2.imread(img_path)
             self.dataset.append(img)
+
+        # update load location for next call (start on the last load location during the system runs)
+        if self.load_location_path:
+            self.ns.load_location, _ = os.path.split(self.load_location_path[0])
 
     def sidebar_cam_port_event(self, option:str):
         """
@@ -237,7 +241,7 @@ class App(ctk.CTk):
         """
         try:
             save_img_path_and_name = filedialog.asksaveasfile(initialdir=self.ns.save_location).name
-            # update save location for next call (start on the last save location during runing)
+            # update save location for next call (start on the last save location during the system runs)
             self.ns.save_location = save_img_path_and_name
             save_location_path = os.path.dirname(save_img_path_and_name)
             image_counter = self.calculate_image_counter(saving_path=save_location_path)
