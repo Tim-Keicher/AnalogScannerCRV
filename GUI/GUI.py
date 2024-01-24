@@ -143,7 +143,7 @@ class App(ctk.CTk):
         self.sidebar_img_format.set(self.ns.name_small_format)
         self.sidebar_img_negativeType.set(self.ns.name_negative_bw)
         self.appearance_mode_optionemenu.set("Dark")
-        self.scaling_optionemenu.set("90%")
+        self.scaling_optionemenu.set("100%")
 
         # Create a Tkinter Label to display the camera image
         self.camera_label = ctk.CTkLabel(self, text="")
