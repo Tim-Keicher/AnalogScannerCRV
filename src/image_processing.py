@@ -9,14 +9,20 @@ class ImageProcessing:
     """A class for image processing operations, including strip cutting, individual image extraction, and saving.
 
     Attributes:
-        PATH_PROCESSED_IMG (str): Path for saving processed images.
+        DEBUGGING_PATH_IMG (str): Path for saving debugging images.
+        ns (names.Names): Object to access constants and names.
 
     Methods:
-        cutStrip(img)
-        cutSingleImgs(img)
-        invertImg(img)
-        saveImg(img, filename_tag="")
-        showImg(img)
+        cutStrip(img, boundaryType, visualizeSteps=False)
+        resizeStripByType(img_array, boundaryType, visualizeSteps=False)
+        generate_dia_masks(w, h, visualizeSteps=False)
+        get_dia_alignment(threshold_img, vertical_mask, horizontal_mask, visualizeSteps=False)
+        cutSingleImgs(img, boundaryType, visualizeSteps=False)
+        generate_img_masks(img_height, img_length, strip_length, pos, visualizeSteps=False)
+        val_img_positions(single_img_masks, strip_mask, pos, img_length, visualizeSteps=False)
+        invertImg(negative_img, offset_img, negative_type, visualizeSteps=False)
+        saveImg(img, file_path_and_name, name_tag="")
+        showImg(window_name, img, destroy_window=True)
     """
 
     def __init__(self):
@@ -205,6 +211,20 @@ class ImageProcessing:
 
     # ------------------------------------------------------------------------------------------------------
     def generate_dia_masks(self, w, h, visualizeSteps=False):
+        """Generate horizontal and vertical masks for DIAS film type.
+
+        Args:
+            w (int): Width of the image.
+            h (int): Height of the image.
+            visualizeSteps (boolean): Activate the visualization of all steps.
+
+        Returns:
+            Tuple[numpy.ndarray, numpy.ndarray, List[tuple], List[tuple]]:
+                horizontal_mask: Mask for the horizontal region.
+                vertical_mask: Mask for the vertical region.
+                horizontal_corners: Corner points for the horizontal mask.
+                vertical_corners: Corner points for the vertical mask.
+        """
         # Initialize horizontal and vertical masks
         horizontal_mask = np.zeros((h, w), dtype=np.uint8)
         vertical_mask = np.zeros((h, w), dtype=np.uint8)
@@ -223,43 +243,68 @@ class ImageProcessing:
 
         # Draw rectangles on the masks
         cv2.rectangle(horizontal_mask, (horizontal_mask_x, horizontal_mask_y),
-                      (horizontal_mask_x + horizontal_mask_width, horizontal_mask_y + horizontal_mask_height), 255, -1)
+                    (horizontal_mask_x + horizontal_mask_width, horizontal_mask_y + horizontal_mask_height), 255, -1)
         cv2.rectangle(vertical_mask, (vertical_mask_x, vertical_mask_y),
-                      (vertical_mask_x + vertical_mask_width, vertical_mask_y + vertical_mask_height), 255, -1)
+                    (vertical_mask_x + vertical_mask_width, vertical_mask_y + vertical_mask_height), 255, -1)
 
         # Define corner points for both masks
         horizontal_corners = [(horizontal_mask_x, horizontal_mask_y),
-                              (horizontal_mask_x + horizontal_mask_width, horizontal_mask_y),
-                              (horizontal_mask_x + horizontal_mask_width, horizontal_mask_y + horizontal_mask_height),
-                              (horizontal_mask_x, horizontal_mask_y + horizontal_mask_height)]
+                            (horizontal_mask_x + horizontal_mask_width, horizontal_mask_y),
+                            (horizontal_mask_x + horizontal_mask_width, horizontal_mask_y + horizontal_mask_height),
+                            (horizontal_mask_x, horizontal_mask_y + horizontal_mask_height)]
 
         vertical_corners = [(vertical_mask_x, vertical_mask_y),
                             (vertical_mask_x + vertical_mask_width, vertical_mask_y),
                             (vertical_mask_x + vertical_mask_width, vertical_mask_y + vertical_mask_height),
                             (vertical_mask_x, vertical_mask_y + vertical_mask_height)]
+
+        # Visualize masks if required
         if visualizeSteps:
             self.saveImg(img=horizontal_mask, file_path_and_name=self.DEBUGGING_PATH_IMG, name_tag="horizontal_mask")
             self.saveImg(img=vertical_mask, file_path_and_name=self.DEBUGGING_PATH_IMG, name_tag="vertical_mask")
             
             self.showImg("horizontal mask", horizontal_mask)
             self.showImg("vertical mask", vertical_mask)
+
         # Return masks and corner points
         return horizontal_mask, vertical_mask, horizontal_corners, vertical_corners
 
+
     # ------------------------------------------------------------------------------------------------------
     def get_dia_alignment(self, threshold_img, vertical_mask, horizontal_mask, visualizeSteps=False):
+        """Determine the alignment of the DIAS film type based on matching pixels in horizontal and vertical masks.
 
+        Args:
+            threshold_img (numpy.ndarray): Thresholded image after processing.
+            vertical_mask (numpy.ndarray): Vertical mask for DIAS film.
+            horizontal_mask (numpy.ndarray): Horizontal mask for DIAS film.
+            visualizeSteps (boolean): Activate the visualization of all steps.
+
+        Returns:
+            str: Alignment type ('horizontal' or 'vertical').
+
+        Notes:
+            The method calculates the number of matching pixels in horizontal and vertical masked images.
+            The alignment is determined based on the comparison of matching pixels.
+
+        Raises:
+            None
+        """
+        # Apply masks to thresholded image
         hor_masked_image = cv2.bitwise_and(threshold_img, threshold_img, mask=horizontal_mask)
-        hor_matching_pixels = np.count_nonzero(hor_masked_image)
-
         vert_masked_image = cv2.bitwise_and(threshold_img, threshold_img, mask=vertical_mask)
+
+        # Count matching pixels in masked images
+        hor_matching_pixels = np.count_nonzero(hor_masked_image)
         vert_matching_pixels = np.count_nonzero(vert_masked_image)
 
+        # Determine alignment based on matching pixels
         if hor_matching_pixels > vert_matching_pixels:
             alignment = self.ns.alignment_horizontal
         else:
             alignment = self.ns.alignment_vertical
 
+        # Visualize if required
         if visualizeSteps:
             self.saveImg(img=vert_masked_image, file_path_and_name=self.DEBUGGING_PATH_IMG, name_tag="vert_masked_image")
             self.saveImg(img=hor_masked_image, file_path_and_name=self.DEBUGGING_PATH_IMG, name_tag="hor_masked_image")
@@ -387,21 +432,44 @@ class ImageProcessing:
 
     # ------------------------------------------------------------------------------------------------------
     def generate_img_masks(self, img_height, img_length, strip_length, pos, visualizeSteps=False):
+        """Generate an image mask for a single image within a film strip.
+
+        Args:
+            img_height (int): Height of the film strip.
+            img_length (int): Length of a single image in the strip.
+            strip_length (int): Total length of the film strip.
+            pos (int): Position of the single image within the strip.
+            visualizeSteps (boolean): Activate the visualization of all steps.
+
+        Returns:
+            numpy.ndarray: Image mask for the specified single image.
+
+        Notes:
+            The method creates a binary image mask to represent the region of a single image within the film strip.
+
+        Raises:
+            None
+        """
+        # Initialize an image mask
         img_mask = np.zeros((img_height, strip_length), dtype=np.uint8)
 
-        # Define dimensions for horizontal and vertical masks
+        # Define dimensions for the image mask
         img_mask_width = img_length
         img_mask_height = img_height
 
+        # Calculate starting coordinates for the image mask
         img_mask_x = pos - img_length
         img_mask_y = 0
 
+        # Draw a rectangle on the mask if the image is within the strip boundaries
         if pos + img_length < strip_length:
-            # Draw rectangles on the masks
             cv2.rectangle(img_mask, (img_mask_x, img_mask_y),
-                          (img_mask_x + img_mask_width, img_mask_y + img_mask_height), 255, -1)
+                        (img_mask_x + img_mask_width, img_mask_y + img_mask_height), 255, -1)
 
+        # Invert the image mask
         img_mask = cv2.bitwise_not(img_mask)
+
+        # Visualize if required
         if visualizeSteps:
             #self.saveImg(img=img_mask, file_path_and_name=self.DEBUGGING_PATH_IMG, name_tag="img_mask")
             
@@ -412,41 +480,69 @@ class ImageProcessing:
 
     # ------------------------------------------------------------------------------------------------------
     def val_img_positions(self, single_img_masks, strip_mask, pos, img_length, visualizeSteps=False):
+        """Validate the positions of individual images within a film strip.
+
+        Args:
+            single_img_masks (list): List of image masks for individual images.
+            strip_mask (numpy.ndarray): Mask representing the entire film strip.
+            pos (list): Positions of potential individual images within the strip.
+            img_length (int): Length of a single image in the strip.
+            visualizeSteps (boolean): Activate the visualization of all steps.
+
+        Returns:
+            int: Validated position of the selected image.
+
+        Notes:
+            The method compares image masks with the strip mask to validate the position of individual images.
+
+        Raises:
+            None
+        """
         mask_positions = []
+
+        # Iterate through image masks
         for single_mask in single_img_masks:
+            # Perform bitwise OR operation on strip mask and individual image mask
             result = cv2.bitwise_or(strip_mask, single_mask)
+
+            # Perform bitwise XOR operation on the result and individual image mask, then invert the result
             result_xor = cv2.bitwise_not(cv2.bitwise_xor(result, single_mask))
+
+            # Count the number of non-zero pixels in the XOR result and append to positions list
             mask_positions.append(np.count_nonzero(result_xor))
 
-            # Generate output
+            # Generate and show output if visualization is required
             if visualizeSteps:
                 stacked = np.concatenate((strip_mask, single_mask, result, result_xor), axis=0)
                 self.saveImg(img=stacked, file_path_and_name=self.DEBUGGING_PATH_IMG, name_tag="stacked")
                 
                 self.showImg('stacked', stacked, destroy_window=False)
 
-        # img witch should be good
+        # Identify the index of the image with the most non-zero pixels (potentially the correct image)
         golden_img_idx = np.argmax(mask_positions)
+
+        # Retrieve and print the validated position
         val = pos[golden_img_idx]
         print(val)
+
         return val
 
     # ------------------------------------------------------------------------------------------------------
     def invertImg(self, negative_img, offset_img, negative_type, visualizeSteps=False):
         """ Invert the provided image and return it, based on the negative_type.
 
-                Args:
-                    negative_img (numpy.ndarray): The negative input image.
-                    offset_img (numpy.ndarray): Cutout of the negative strip (total white value).
-                    negative_type (string): CHeck for Color or BW color detection.
-                    visualizeSteps(boolean): Activate the visualisation of all Steps
+        Args:
+            negative_img (numpy.ndarray): The negative input image.
+            offset_img (numpy.ndarray): Cutout of the negative strip (total white value).
+            negative_type (string): CHeck for Color or BW color detection.
+            visualizeSteps(boolean): Activate the visualisation of all Steps
 
-                Returns:
-                    inverted_image (numpy.ndarray): The inverted image
+        Returns:
+            inverted_image (numpy.ndarray): The inverted image
 
-                Raises:
-                    ReturnError: If the negative_type is not valid type.
-                """
+        Raises:
+            ReturnError: If the negative_type is not valid type.
+        """
         # Invert colored image
         if negative_type is self.ns.name_negative_color:
             offset = ccC.calcOffset(offset_img, verbose=False)
@@ -491,7 +587,28 @@ class ImageProcessing:
 
     # ------------------------------------------------------------------------------------------------------
     def showImg(self, window_name, img, destroy_window=True):
+        """Display an image in a window.
+
+        Args:
+            window_name (str): Name of the window.
+            img (numpy.ndarray): Image to be displayed.
+            destroy_window (boolean): Close the window after displaying if True.
+
+        Returns:
+            None
+
+        Notes:
+            This method uses OpenCV to display an image in a window. It waits for a key press (0) to close the window.
+
+        Raises:
+            None
+        """
+        # Display the image in a window
         cv2.imshow(window_name, img)
+
+        # Wait for a key press (0) to close the window
         cv2.waitKey(0)
+
+        # Close the window if destroy_window is True
         if destroy_window:
             cv2.destroyAllWindows()
