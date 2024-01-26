@@ -1,26 +1,6 @@
 import cv2
 import numpy as np
 
-# alpha -> Kontrast
-# beta ->  Helligkeitswert
-
-def bitwise(image_path, alpha=1.2, beta=1, showImage=False):
-    # Get image from path
-    negative_image = cv2.imread(image_path)
-
-    # invert image
-    inverted_image = cv2.bitwise_not(negative_image)
-    inverted_image = cv2.cvtColor(inverted_image, cv2.COLOR_BGR2RGB)
-
-    adjusted_image = cv2.convertScaleAbs(inverted_image, alpha=alpha, beta=beta)
-
-    if showImage:
-        combined_image = np.hstack((negative_image, inverted_image, adjusted_image))
-        cv2.imshow('combined_image', combined_image)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-
-
 def calcOffset(snipped, verbose=False):
     img = cv2.cvtColor(snipped, cv2.COLOR_BGR2GRAY)
 

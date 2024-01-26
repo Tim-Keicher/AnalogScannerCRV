@@ -3,7 +3,6 @@ import numpy as np
 import datetime
 import src.colorcorectionBW as ccBW
 import src.colorcorrectionCOLOR as ccC
-
 import src.namespace as names
 
 class ImageProcessing:
@@ -13,7 +12,6 @@ class ImageProcessing:
         PATH_PROCESSED_IMG (str): Path for saving processed images.
 
     Methods:
-        process(img)
         cutStrip(img)
         cutSingleImgs(img)
         invertImg(img)
@@ -22,40 +20,10 @@ class ImageProcessing:
     """
 
     def __init__(self):
-        self.PATH_PROCESSED_IMG = "Saves/"
         self.DEBUGGING_PATH_IMG = "Saves/Debugging/debug_img"
         self.config_cut_img_sep_lines = True
 
         self.ns = names.Names()
-    # ------------------------------------------------------------------------------------------------------
-    def process(self, img):
-        """Process an input image by cutting strips, extracting individual images, and saving them.
-
-        Args:
-            image (numpy.ndarray): The input image.
-
-        Returns:
-            None
-
-        Raises:
-            ValueError: If the input image is not provided or is not a valid NumPy array.
-        """
-        # Check if the image was successfully loaded
-        if img is None or not isinstance(img, np.ndarray):
-            raise ValueError("Invalid input image. Please provide a valid NumPy array.")
-
-        # Cut a strip from the image based on corner detection
-        crp_img = self.cutStrip(img)
-
-        # Cut and retrieve individual images separated by vertical lines
-        single_imgs, strip = self.cutSingleImgs(crp_img)
-
-        # Save each individual image with an index as part of the filename
-        for i, img in enumerate(single_imgs):
-            self.saveImg(img, "_" + str(i))
-
-        # Exit the process after saving images
-        exit()
 
     # ------------------------------------------------------------------------------------------------------
     def cutStrip(self, img, boundaryType, visualizeSteps=False):
@@ -186,6 +154,7 @@ class ImageProcessing:
 
         return final_array
 
+    # ------------------------------------------------------------------------------------------------------
     def resizeStripByType(self, img_array, boundaryType, visualizeSteps=False):
         """Resize the strips to cut off the edge
 
@@ -234,6 +203,7 @@ class ImageProcessing:
                 print(f'[WARNING] Unknown BoundaryType: {boundaryType}')
         return cutStrip
 
+    # ------------------------------------------------------------------------------------------------------
     def generate_dia_masks(self, w, h, visualizeSteps=False):
         # Initialize horizontal and vertical masks
         horizontal_mask = np.zeros((h, w), dtype=np.uint8)
@@ -276,6 +246,7 @@ class ImageProcessing:
         # Return masks and corner points
         return horizontal_mask, vertical_mask, horizontal_corners, vertical_corners
 
+    # ------------------------------------------------------------------------------------------------------
     def get_dia_alignment(self, threshold_img, vertical_mask, horizontal_mask, visualizeSteps=False):
 
         hor_masked_image = cv2.bitwise_and(threshold_img, threshold_img, mask=horizontal_mask)
@@ -414,6 +385,7 @@ class ImageProcessing:
 
         return cropped_imgs, strip
 
+    # ------------------------------------------------------------------------------------------------------
     def generate_img_masks(self, img_height, img_length, strip_length, pos, visualizeSteps=False):
         img_mask = np.zeros((img_height, strip_length), dtype=np.uint8)
 
@@ -438,6 +410,7 @@ class ImageProcessing:
 
         return img_mask
 
+    # ------------------------------------------------------------------------------------------------------
     def val_img_positions(self, single_img_masks, strip_mask, pos, img_length, visualizeSteps=False):
         mask_positions = []
         for single_mask in single_img_masks:
