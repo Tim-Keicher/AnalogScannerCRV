@@ -11,7 +11,7 @@ Images can be loaded from Path or captured directly by a connected camera.
 ### Supported Film-Formats
 | Format             |                 35 mm                  |               120 (6x6)                |               120 (6x9)                |              Dias              |
 | :---: |:--------------------------------------:|:--------------------------------------:|:--------------------------------------:|:------------------------------:|
-| Black &<br/>Whitze |   ![35mmSW.jpg](Images%2F35mmSW.jpg)   |    ![6x6SW.jpg](Images%2F6x6SW.jpg)    |    ![6x9SW.jpg](Images%2F6x9SW.jpg)    |     Yes, No Example Image      |
+| Black &<br/>Whitze |   ![35mmSW.jpg](Images%2F35mmSW.jpg)   |    ![6x6SW.jpg](Images%2F6x6SW.jpg)    |    Yes, No Example Image    |     Yes, No Example Image      |
 | Colored            |![35mmColor.jpg](Images%2F35mmColor.jpg)| ![6x6Color.jpg](Images%2F6x6Color.jpg) | ![6x9Color.jpg](Images%2F6x9Color.jpg) | ![Dia6.jpg](Images%2FDia6.jpg) |
 
 
