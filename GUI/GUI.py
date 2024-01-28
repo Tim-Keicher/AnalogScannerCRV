@@ -306,9 +306,9 @@ class App(ctk.CTk):
                         if strip is not None:
                             invertedImage = self.processing.invertImg(negative_img=img, offset_img=strip,
                                                            negative_type=negativeType, visualizeSteps=self.ns.debugging_mode)
-                            display_img.append(Image.fromarray(invertedImage))
+                            display_img.append(Image.fromarray(cv2.cvtColor(invertedImage, cv2.COLOR_BGR2RGB)))
                             self.finished_imgs.append(Image.fromarray(invertedImage))
-                    if len(display_img)>0:
+                    if len(display_img) > 0:
                         self.camera_label.grid_forget()
                         self.image_frame.grid(row=0, column=1, rowspan=3, columnspan=2, padx=10, pady=10)
                         self.image_frame.update_images(display_img)
