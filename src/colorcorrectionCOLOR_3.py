@@ -2,8 +2,8 @@ import cv2
 import numpy as np
 
 # Bild laden
-image_path = "../Images/test_color_img.png"
-snipped_path = "../Images/Color_snipped.JPG"
+image_path = "../Images/Test/test_color_img.png"
+snipped_path = "../Images/Test/Color_snipped.JPG"
 image = cv2.imread(image_path)
 snipped = cv2.imread(snipped_path)
 

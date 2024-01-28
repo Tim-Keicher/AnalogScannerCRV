@@ -102,7 +102,7 @@ class App(ctk.CTk):
         # self.sidebar_camera_port.grid(row=2, column=0, padx=20, pady=10)  # Show sidebar_load button first
 
         # OptionMenu for choosing image format
-        self.sidebar_img_format = ctk.CTkOptionMenu(self.sidebar_frame, values=[self.ns.name_small_format, self.ns.name_medium_format, self.ns.name_dia],
+        self.sidebar_img_format = ctk.CTkOptionMenu(self.sidebar_frame, values=[self.ns.name_small_format, self.ns.name_medium_format_6x6, self.ns.name_medium_format_6x9, self.ns.name_dia],
                                                     command=self.sidebar_format_event)
         self.sidebar_img_format.grid(row=3, column=0, padx=20, pady=10)
 

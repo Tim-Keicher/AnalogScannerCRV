@@ -88,7 +88,7 @@ class ImageProcessing:
                 min_size = self.ns.min_size_dia
             else:
                 min_size = self.ns.min_size_film
-
+            print(f'[DEBUG] contour: {cont.size}')
             if cont.size >= min_size:
                 cv2.drawContours(mask, [cont], -1, (0, 0, 0), thickness=cv2.FILLED)
                 filtered_contours.append(cont)
@@ -108,6 +108,7 @@ class ImageProcessing:
                 epsilon = 0.02 * cv2.arcLength(cont, True)
                 corners_approx = cv2.approxPolyDP(cont, epsilon, True)
                 n_corners = len(corners_approx)
+                print(f'[DEBUG] ncorners: {n_corners}')
                 if n_corners == 4:
                     corners = [tuple(point[0]) for point in corners_approx]
 
@@ -181,7 +182,7 @@ class ImageProcessing:
                 cuttingHeight = int(h * 15 / 100)
                 cuttingWidth = int(cuttingHeight * 50 / 100)
                 cutStrip.append(img[cuttingHeight:h - cuttingHeight, cuttingWidth:w - cuttingWidth])
-            elif boundaryType == self.ns.name_medium_format:
+            elif boundaryType == self.ns.name_medium_format_6x9 or boundaryType == self.ns.name_medium_format_6x6:
                 cuttingHeight = int(h * 4 / 100)
                 cuttingWidth = int(cuttingHeight * 90 / 100)
                 cutStrip.append(img[cuttingHeight:h - cuttingHeight, cuttingWidth:w - cuttingWidth])
@@ -347,7 +348,12 @@ class ImageProcessing:
             width_ratio = 36 / ratio
             n_images = int(w / width_ratio)
             singleImageWidth = h * 36 / 25
-        else:
+        elif boundaryType == self.ns.name_medium_format_6x6:
+            ratio = 55 / h
+            width_ratio = 55 / ratio
+            n_images = int(w / width_ratio)
+            singleImageWidth = h
+        elif boundaryType == self.ns.name_medium_format_6x9:
             ratio = 60 / h
             width_ratio = 90 / ratio
             n_images = int(w / width_ratio)
