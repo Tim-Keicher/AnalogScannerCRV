@@ -1,41 +1,62 @@
 import cv2
 import numpy as np
+import skimage
 
-'''
-Bei der Manipulation von Farben und Helligkeit kann die Verwendung des HSV-Farbraums einige Vorteile bieten. HSV steht für Hue (Farbton), Saturation (Sättigung) und Value (Wert). Im Gegensatz zum RGB-Farbraum, in dem Farben als Kombination von Rot, Grün und Blau dargestellt werden, ermöglicht der HSV-Farbraum eine intuitive Steuerung der Farbe, Sättigung und Helligkeit unabhängig voneinander.
+def stretch(plane):
+    """
+    Stretch the pixel intensity values of a given image plane.
 
-Helligkeitseinstellung: Im HSV-Farbraum ist der Helligkeitskanal (Value) separat, was die Anpassung der Helligkeit erleichtert. Wenn du nur die Helligkeit ändern möchtest, ohne die Farben zu beeinflussen, ist die Arbeit im HSV-Farbraum einfacher.
+    Parameters:
+    - plane: Input image plane (single color channel)
 
-Invertierung: Bei der Invertierung von Farben kannst du den Farbton (Hue) beibehalten und nur die Sättigung und Helligkeit umkehren. Dies kann in HSV einfacher sein als in RGB, wo eine direkte Invertierung aller Kanäle (Rot, Grün, Blau) komplizierter sein kann und nicht das gewünschte Ergebnis liefert.
+    Returns:
+    - Stretched image plane
+    """
 
-Unabhängige Kanäle: Im HSV-Farbraum sind Farbton, Sättigung und Helligkeit unabhängige Kanäle. Dies ermöglicht es, verschiedene Farb- und Helligkeitsanpassungen getrennt durchzuführen, was oft flexibler ist als bei RGB.
+    # Calculate the 1st and 99th percentiles to determine the intensity range for stretching
+    imin = np.percentile(plane, 1)
+    imax = np.percentile(plane, 99)
 
-Für spezifische Bildmanipulationen kann die Wahl zwischen RGB und HSV von der Natur der gewünschten Änderungen abhängen. In diesem Fall, wenn du die Helligkeit anpassen und Farben invertieren möchtest, bietet der HSV-Farbraum eine effiziente Methode, um dies zu erreichen, ohne die Farbkanäle direkt zu verändern, was zu unerwünschten Ergebnissen führen könnte.
-'''
+    # Stretch the pixel intensity values of the image plane to the [0, 1] range
+    plane = (plane - imin) / (imax - imin)
 
+    return plane
 
-def calcOffset(snipped, verbose=False):
-    # Convert to HSV Colorspace
-    img_hsv = cv2.cvtColor(snipped, cv2.COLOR_BGR2HSV)
-    # Calculate average in hsv channel
-    average_value = int(img_hsv[:,:,2].mean())
-    if verbose:
-        print(f"Average pixel value: {average_value}")
-    return average_value
+def invert_with_offset(img, showImage=False):
+    """
+    Invert the color channels of the image considering an offset value.
 
+    Parameters:
+    - img: Input image
+    - showImage: Indicates whether to display the inverted image (Default: False)
 
-def invert_with_offset(img, offset, showImage=False):
-    # Invertiere die Farbkanäle
-    inverted_rgb = cv2.bitwise_not(img)
+    Returns:
+    - Normalized inverted RGB image
+    """
 
-    # Korrigiere die Helligkeit
-    inverted_rgb = cv2.add(inverted_rgb, offset)
+    # Split the input image into color channels
+    (bneg, gneg, rneg) = cv2.split(img)
 
-    # Checke die Werte auf den Bereich 0-255
-    normalized_inverted_rgb = np.clip(inverted_rgb, 0, 255).astype(np.uint8)
-    normalized_inverted_rgb=cv2.cvtColor(normalized_inverted_rgb, cv2.COLOR_BGR2RGB)
+    # Apply the stretch function to each color channel and invert the color channels
+    b = 1 - np.clip(stretch(bneg), 0, 1)
+    g = 1 - np.clip(stretch(gneg), 0, 1)
+    r = 1 - np.clip(stretch(rneg), 0, 1)
+
+    # Apply the gamma correction algorithm to each color channel
+    # Here, the gamma value is adjusted based on the mean value of the color channel and the offset
+    b = skimage.exposure.adjust_gamma(b, gamma=b.mean()/0.65)
+    g = skimage.exposure.adjust_gamma(g, gamma=g.mean()/0.25)
+    r = skimage.exposure.adjust_gamma(r, gamma=r.mean()/0.5)
+
+    # Merge the color channels back into an RGB image
+    inverted_rgb = cv2.merge([b, g, r])
+
+    # Normalize the inverted RGB values to the range [0, 255] and convert the data type to uint8
+    normalized_inverted_rgb = np.multiply(inverted_rgb, 255).astype('uint8')
+
+    # Display the inverted image if showImage is set to True
     if showImage:
-        cv2.imshow('Invertiert mit Offset', normalized_inverted_rgb)
+        cv2.imshow('Inverted Image with Offset', normalized_inverted_rgb)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
