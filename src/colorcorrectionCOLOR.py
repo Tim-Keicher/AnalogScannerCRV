@@ -2,6 +2,8 @@ import cv2
 import numpy as np
 import skimage
 
+# Code-Reference: https://stackoverflow.com/questions/73433750/how-do-i-develop-a-negative-film-image-using-python
+
 def stretch(plane):
     """
     Stretch the pixel intensity values of a given image plane.
@@ -22,7 +24,7 @@ def stretch(plane):
 
     return plane
 
-def invert_with_offset(img, showImage=False):
+def invert(img, showImage=False):
     """
     Invert the color channels of the image considering an offset value.
 
@@ -44,8 +46,8 @@ def invert_with_offset(img, showImage=False):
 
     # Apply the gamma correction algorithm to each color channel
     # Here, the gamma value is adjusted based on the mean value of the color channel and the offset
-    b = skimage.exposure.adjust_gamma(b, gamma=b.mean()/0.65)
-    g = skimage.exposure.adjust_gamma(g, gamma=g.mean()/0.25)
+    b = skimage.exposure.adjust_gamma(b, gamma=b.mean()/0.5)
+    g = skimage.exposure.adjust_gamma(g, gamma=g.mean()/0.5)
     r = skimage.exposure.adjust_gamma(r, gamma=r.mean()/0.5)
 
     # Merge the color channels back into an RGB image
