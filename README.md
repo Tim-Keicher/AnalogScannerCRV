@@ -3,6 +3,18 @@ Project in the lecture Computer- & Robotervision at  the Hochschule Heilbronn in
 
 This project was supervised by Prof. Dr. rer. nat. Dieter Maier.
 
+## Concept
+Analog strips are photographed on an illuminated background. The rest is managed by digital image processing. 
+The result is digitized images of the objects in the camera's field of view. 
+Images can be loaded from Path or captured directly by a connected camera.
+
+### Supported Film-Formats
+| Format             | 35 mm | 120 (6x6)                                   | 120 (6x9) | Dias |
+| :---: | :---: | :---: | :---: | :---: |
+| Black &<br/>Whitze |![35mmSW.jpg](Images%2F35mmSW.jpg)| ![6x6SW.jpg](Images%2F6x6SW.jpg)            |Yes, No Example Image|Yes, No Example Image|
+| Colored            |![35mmColor2.jpg](Images%2F35mmColor2.jpg)| Yes, No Example Image |![6x9Color.jpg](Images%2F6x9Color.jpg)|![HighRes_Dias.jpg](Images%2FHighRes_Dias.jpg)|
+
+
 ## Graphical User Interface (GUI)
 The GUI forms the interface between the user and the system. 
 It is designed to enable intuitive and efficient interaction with the application. 
