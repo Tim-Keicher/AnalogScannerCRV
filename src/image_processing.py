@@ -181,7 +181,7 @@ class ImageProcessing:
                 cuttingHeight = int(h * 15 / 100)
                 cuttingWidth = int(cuttingHeight * 50 / 100)
                 cutStrip.append(img[cuttingHeight:h - cuttingHeight, cuttingWidth:w - cuttingWidth])
-            elif boundaryType == self.ns.name_medium_format:
+            elif boundaryType == self.ns.name_medium_format_6x6 or boundaryType == self.ns.name_medium_format_6x9:
                 cuttingHeight = int(h * 4 / 100)
                 cuttingWidth = int(cuttingHeight * 90 / 100)
                 cutStrip.append(img[cuttingHeight:h - cuttingHeight, cuttingWidth:w - cuttingWidth])
@@ -347,7 +347,12 @@ class ImageProcessing:
             width_ratio = 36 / ratio
             n_images = int(w / width_ratio)
             singleImageWidth = h * 36 / 25
-        else:
+        elif boundaryType == self.ns.name_medium_format_6x6:
+            ratio = 55 / h
+            width_ratio = 55 / ratio
+            n_images = int(w / width_ratio)
+            singleImageWidth = h
+        elif boundaryType == self.ns.name_medium_format_6x9:
             ratio = 60 / h
             width_ratio = 90 / ratio
             n_images = int(w / width_ratio)
